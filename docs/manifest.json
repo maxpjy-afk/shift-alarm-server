@@ -1,0 +1,15 @@
+{
+  "name": "근무표 알람",
+  "short_name": "근무알람",
+  "description": "교대 근무자를 위한 스마트 스케줄 알람 앱",
+  "start_url": "./shift_alarm_v3.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0a10",
+  "theme_color": "#0a0a10",
+  "lang": "ko",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

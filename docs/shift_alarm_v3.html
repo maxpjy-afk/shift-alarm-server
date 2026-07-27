@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>근무표 알람</title>
+<meta name="theme-color" content="#0a0a10" id="theme-color-meta">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="근무표 알람">
+<meta name="description" content="교대 근무자를 위한 스마트 스케줄 알람 앱">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon.svg">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+
+/* ── THEMES ── */
+[data-theme="dark"]{
+  --bg:#0a0a10;--bg2:#12121a;--bg3:#1a1a24;--bg4:#222230;--bg5:#2a2a3a;
+  --brd:#2a2a3c;--brd2:#34344a;
+  --tx:#f0f0f8;--tx2:#8888a8;--tx3:#44445a;
+  --acc:#7c6ef7;--acc2:#5b4de0;--accg:rgba(124,110,247,.2);
+  --card-shadow:0 2px 12px rgba(0,0,0,.4);
+  --nav-bg:rgba(10,10,16,.94);
+}
+[data-theme="light"]{
+  --bg:#f5f5fa;--bg2:#ffffff;--bg3:#f0f0f7;--bg4:#e8e8f2;--bg5:#dcdcee;
+  --brd:#e0e0ef;--brd2:#d0d0e8;
+  --tx:#18182a;--tx2:#55557a;--tx3:#aaaacc;
+  --acc:#7c6ef7;--acc2:#5b4de0;--accg:rgba(124,110,247,.12);
+  --card-shadow:0 2px 12px rgba(100,100,160,.1);
+  --nav-bg:rgba(245,245,250,.94);
+}
+[data-theme="mint"]{
+  --bg:#0a110e;--bg2:#111a15;--bg3:#162118;--bg4:#1e2d22;--bg5:#253828;
+  --brd:#1e3025;--brd2:#274035;
+  --tx:#e8f5ee;--tx2:#7aaa90;--tx3:#3a5a48;
+  --acc:#2dba6e;--acc2:#1e9055;--accg:rgba(45,186,110,.2);
+  --card-shadow:0 2px 12px rgba(0,0,0,.4);
+  --nav-bg:rgba(10,17,14,.94);
+}
+[data-theme="sunset"]{
+  --bg:#110a08;--bg2:#1a1008;--bg3:#221508;--bg4:#2e1c0a;--bg5:#3a240e;
+  --brd:#3a2010;--brd2:#4a2c14;
+  --tx:#f8ede0;--tx2:#b08060;--tx3:#5a3820;
+  --acc:#f07030;--acc2:#c05020;--accg:rgba(240,112,48,.2);
+  --card-shadow:0 2px 12px rgba(0,0,0,.4);
+  --nav-bg:rgba(17,10,8,.94);
+}
+[data-theme="rose"]{
+  --bg:#110810;--bg2:#1a0e18;--bg3:#221420;--bg4:#2e1a2c;--bg5:#3a2038;
+  --brd:#3a1838;--brd2:#4a2248;
+  --tx:#f8e8f6;--tx2:#b070a8;--tx3:#5a2858;
+  --acc:#d060c0;--acc2:#a04090;--accg:rgba(208,96,192,.2);
+  --card-shadow:0 2px 12px rgba(0,0,0,.4);
+  --nav-bg:rgba(17,8,16,.94);
+}
+[data-theme="ocean"]{
+  --bg:#08100e;--bg2:#0e181a;--bg3:#142028;--bg4:#1a2a34;--bg5:#203440;
+  --brd:#183040;--brd2:#204050;
+  --tx:#e0f0f8;--tx2:#6090b0;--tx3:#284860;
+  --acc:#2090d0;--acc2:#1068a0;--accg:rgba(32,144,208,.2);
+  --card-shadow:0 2px 12px rgba(0,0,0,.4);
+  --nav-bg:rgba(8,16,14,.94);
+}
+
+html{height:100%}
+body{height:100%;font-family:'DM Sans',sans-serif;overflow:hidden;overscroll-behavior:none;background:#000}
+#app{position:fixed;inset:0;background:var(--bg);color:var(--tx);display:flex;flex-direction:column;overflow:hidden;transition:background .3s,color .3s}
+.scr{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--bg);transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s,background .3s;pointer-events:none;opacity:0;transform:translateX(16px)}
+.scr.act{pointer-events:all;opacity:1;transform:none}
+.sv{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;padding:0 16px calc(100px + env(safe-area-inset-bottom));scrollbar-width:none}
+.sv::-webkit-scrollbar{display:none}
+.ph{padding:calc(18px + env(safe-area-inset-top)) 16px 0;flex-shrink:0}
+.bnav{position:absolute;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(5,1fr);background:var(--nav-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:.5px solid var(--brd);padding:10px 0 calc(10px + env(safe-area-inset-bottom));z-index:100;transition:background .3s}
+.ni{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:6px 0;-webkit-user-select:none;user-select:none}
+.ni svg{width:22px;height:22px}
+.nl{font-size:9px;color:var(--tx3);font-weight:500;letter-spacing:.05em;text-transform:uppercase}
+.ni.act .nl{color:var(--acc)}
+.cd{background:var(--bg2);border:.5px solid var(--brd);border-radius:18px;padding:16px;margin-bottom:10px;box-shadow:var(--card-shadow);transition:background .3s,border-color .3s}
+.cd2{background:var(--bg3);border:.5px solid var(--brd);border-radius:12px;padding:12px 14px;margin-bottom:8px;transition:background .3s}
+.cd3{background:var(--bg4);border:.5px solid var(--brd2);border-radius:9px;padding:10px 12px;margin-bottom:6px;transition:background .3s}
+.sl{font-size:10px;font-weight:600;color:var(--tx3);letter-spacing:.1em;text-transform:uppercase;margin:16px 0 8px}
+.chip{display:inline-flex;align-items:center;padding:4px 11px;border-radius:99px;font-size:11px;font-weight:600;font-family:'DM Mono',monospace;border:.5px solid;letter-spacing:.02em}
+input,select,textarea{width:100%;padding:12px 13px;border:.5px solid var(--brd2);border-radius:9px;font-size:16px;font-family:'DM Sans',sans-serif;background:var(--bg4);color:var(--tx);outline:none;transition:border-color .15s,background .3s,color .3s}
+input:focus,select:focus,textarea:focus{border-color:var(--acc)}
+textarea{resize:none;height:78px;line-height:1.5}
+select option{background:var(--bg2)}
+.btn{width:100%;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;margin-top:6px;min-height:48px}
+.bp{background:var(--acc);color:#fff}.bp:hover{opacity:.88}.bp:active{transform:scale(.97)}.bp:disabled{opacity:.4;cursor:not-allowed}
+.bgh{background:transparent;border:.5px solid var(--brd2);color:var(--tx2)}.bgh:hover{border-color:var(--acc);color:var(--acc)}
+.tg{width:44px;height:26px;border-radius:13px;border:none;background:var(--bg5);cursor:pointer;position:relative;transition:background .25s;flex-shrink:0}
+.tg.on{background:#25c06a}
+.tg::after{content:'';position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;top:3px;left:3px;transition:left .25s;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.tg.on::after{left:21px}
+.row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:.5px solid var(--brd)}
+.row:last-child{border-bottom:none}
+.lb{font-size:11px;color:var(--tx2);margin-bottom:5px;font-weight:500;letter-spacing:.03em;text-transform:uppercase}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+input[type=file]{display:none}
+.ch{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:10px;color:var(--tx3);font-weight:600;margin-bottom:4px;gap:2px}
+.cg{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cc{aspect-ratio:1;border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg3);position:relative;cursor:pointer;transition:transform .1s,background .3s}
+.cc:active{transform:scale(.9)}.cc.emp{background:transparent;cursor:default}.cc.tod{box-shadow:0 0 0 1.5px var(--acc)}
+.cn{font-size:12px;font-weight:600;font-family:'DM Mono',monospace}
+.cc2{font-size:8px;font-family:'DM Mono',monospace;font-weight:500;margin-top:1px}
+.mdot{position:absolute;top:2px;right:2px;width:4px;height:4px;border-radius:50%;background:var(--acc)}
+.sw{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .15s;flex-shrink:0}
+.sw.sel{border-color:var(--tx);transform:scale(1.15)}
+.sc{background:var(--bg2);border:.5px solid var(--brd);border-radius:12px;padding:14px;transition:background .3s}
+.pts{display:flex;gap:4px;background:var(--bg3);border-radius:99px;padding:3px;margin-bottom:14px}
+.pt{flex:1;padding:9px 4px;border:none;border-radius:99px;background:transparent;font-size:12px;font-weight:500;cursor:pointer;color:var(--tx2);font-family:'DM Sans',sans-serif;transition:all .15s}
+.pt.act{background:var(--acc);color:#fff}
+.uzn{border:1.5px dashed var(--brd2);border-radius:14px;padding:22px;text-align:center;cursor:pointer;color:var(--tx2);font-size:13px;transition:all .2s}
+.uzn:hover{border-color:var(--acc);color:var(--acc)}
+.ipr{width:100%;border-radius:10px;margin-top:8px;display:none;max-height:150px;object-fit:cover}
+.theme-card{border-radius:12px;padding:12px;cursor:pointer;border:2px solid transparent;transition:all .2s;position:relative;overflow:hidden}
+.theme-card.sel-theme{border-color:var(--acc)}
+.theme-card .tc-check{position:absolute;top:6px;right:6px;width:18px;height:18px;border-radius:50%;background:var(--acc);display:none;align-items:center;justify-content:center;font-size:10px;color:#fff}
+.theme-card.sel-theme .tc-check{display:flex}
+.stmsg{font-size:12px;color:var(--tx2);text-align:center;padding:6px;min-height:20px}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{display:inline-block;animation:spin .7s linear infinite}
+.ob-p{transition:opacity .3s}
+.odot{height:6px;border-radius:3px;transition:all .3s}
+.warn{background:var(--bg3);border:.5px solid var(--brd2);border-radius:12px;padding:12px 14px;font-size:12px;color:var(--tx2);line-height:1.6;margin-bottom:10px}
+.warn b{color:var(--tx)}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:5px 10px;border-radius:99px}
+.badge.ok{background:rgba(37,192,106,.15);color:#25c06a}
+.badge.no{background:rgba(240,85,85,.15);color:#f05555}
+</style>
+</head>
+<body>
+<div id="app" data-theme="dark">
+
+  <!-- ONBOARDING -->
+  <div id="s0" class="scr act" style="padding:0">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(36px + env(safe-area-inset-top)) 28px 20px;text-align:center">
+      <div id="ob0" class="ob-p">
+        <div style="font-size:70px;margin-bottom:22px">🏥</div>
+        <p style="font-size:28px;font-weight:700;letter-spacing:-.5px;margin-bottom:12px">근무표 알람</p>
+        <p style="font-size:15px;color:var(--tx2);line-height:1.7">교대 근무자를 위한<br>스마트 스케줄 알람 앱</p>
+      </div>
+      <div id="ob1" class="ob-p" style="opacity:0;display:none">
+        <div style="font-size:60px;margin-bottom:18px">📷</div>
+        <p style="font-size:22px;font-weight:700;margin-bottom:12px">사진 한 장으로 끝</p>
+        <p style="font-size:14px;color:var(--tx2);line-height:1.7">근무표 사진을 찍어 올리면<br>AI가 자동으로 읽고 스케줄을 정리해요</p>
+        <div style="background:var(--bg3);border-radius:12px;padding:14px;margin-top:18px;font-size:13px;color:var(--tx2);line-height:1.6">
+          📸 사진 업로드 → 🤖 AI 분석 → 📅 스케줄 완성
+        </div>
+      </div>
+      <div id="ob2" class="ob-p" style="opacity:0;display:none">
+        <div style="font-size:60px;margin-bottom:18px">🎨</div>
+        <p style="font-size:22px;font-weight:700;margin-bottom:12px">내 취향대로 꾸미기</p>
+        <p style="font-size:14px;color:var(--tx2);line-height:1.7">다크, 라이트, 민트, 선셋 등<br>6가지 테마로 앱을 꾸밀 수 있어요</p>
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:18px">
+          <div style="width:36px;height:36px;border-radius:50%;background:#0a0a10;border:2px solid var(--brd2)"></div>
+          <div style="width:36px;height:36px;border-radius:50%;background:#f5f5fa;border:2px solid var(--brd2)"></div>
+          <div style="width:36px;height:36px;border-radius:50%;background:#0a110e;border:2px solid var(--brd2)"></div>
+          <div style="width:36px;height:36px;border-radius:50%;background:#110a08;border:2px solid var(--brd2)"></div>
+          <div style="width:36px;height:36px;border-radius:50%;background:#110810;border:2px solid var(--brd2)"></div>
+          <div style="width:36px;height:36px;border-radius:50%;background:#08100e;border:2px solid var(--brd2)"></div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:16px 28px calc(28px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;gap:14px">
+      <div style="display:flex;gap:6px" id="dots">
+        <div class="odot" id="d0" style="width:18px;background:var(--acc)"></div>
+        <div class="odot" id="d1" style="width:6px;background:var(--brd2)"></div>
+        <div class="odot" id="d2" style="width:6px;background:var(--brd2)"></div>
+      </div>
+      <button class="btn bp" id="ob-btn" onclick="obNext()">다음</button>
+      <button onclick="goMain()" style="border:none;background:none;color:var(--tx3);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;padding:6px 12px">건너뛰기</button>
+    </div>
+  </div>
+
+  <!-- HOME -->
+  <div id="s1" class="scr">
+    <div class="ph" style="display:flex;justify-content:space-between;align-items:center">
+      <div><p style="font-size:22px;font-weight:700;letter-spacing:-.3px">안녕하세요 👋</p><p style="font-size:12px;color:var(--tx2);margin-top:2px" id="h-date"></p></div>
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--accg);border:.5px solid var(--acc);display:flex;align-items:center;justify-content:center">🏥</div>
+    </div>
+    <div class="sv" style="padding-top:10px">
+      <div style="background:linear-gradient(135deg,var(--acc2),var(--acc));border-radius:18px;padding:20px;margin-bottom:10px;position:relative;overflow:hidden">
+        <div style="position:absolute;right:-16px;top:-16px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.06)"></div>
+        <div style="font-size:11px;color:rgba(255,255,255,.65);margin-bottom:8px;display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:#fff;display:inline-block;animation:pulse 2s infinite"></span>다음 출근까지</div>
+        <div id="h-cd" style="font-size:36px;font-weight:700;font-family:'DM Mono',monospace;color:#fff;letter-spacing:-1.5px;line-height:1">--:--:--</div>
+        <div id="h-nd" style="font-size:13px;color:rgba(255,255,255,.65);margin-top:6px">스케줄을 입력하면 표시돼요</div>
+        <div id="h-ab" style="display:none;margin-top:8px;background:rgba(255,255,255,.15);border-radius:99px;padding:4px 10px;font-size:11px;color:#fff;width:fit-content">⏰ 알람 <span id="h-at"></span></div>
+      </div>
+      <div class="sl">오늘 근무</div>
+      <div class="cd" id="h-today"><p style="font-size:13px;color:var(--tx2)">스케줄 분석 후 표시됩니다</p></div>
+      <div class="sl">이번 달 통계</div>
+      <div class="g2" style="margin-bottom:10px" id="h-stats">
+        <div class="sc"><div style="font-size:26px;font-weight:700;font-family:'DM Mono',monospace;color:#f0a830">-</div><div style="font-size:11px;color:var(--tx2);margin-top:3px">데이</div><div style="font-size:10px;color:var(--tx3)">총 -h</div></div>
+        <div class="sc"><div style="font-size:26px;font-weight:700;font-family:'DM Mono',monospace;color:#38a8f0">-</div><div style="font-size:11px;color:var(--tx2);margin-top:3px">이브닝</div><div style="font-size:10px;color:var(--tx3)">총 -h</div></div>
+        <div class="sc"><div style="font-size:26px;font-weight:700;font-family:'DM Mono',monospace;color:#a070f8">-</div><div style="font-size:11px;color:var(--tx2);margin-top:3px">나이트</div><div style="font-size:10px;color:var(--tx3)">총 -h</div></div>
+        <div class="sc"><div style="font-size:26px;font-weight:700;font-family:'DM Mono',monospace;color:#50506a">-</div><div style="font-size:11px;color:var(--tx2);margin-top:3px">오프</div><div style="font-size:10px;color:var(--tx3)">휴무일</div></div>
+      </div>
+      <div class="sl">다가오는 근무</div>
+      <div id="h-up"><p style="font-size:13px;color:var(--tx2);padding:4px 0">다가오는 근무 없음</p></div>
+    </div>
+  </div>
+
+  <!-- SETUP -->
+  <div id="s2" class="scr">
+    <div class="ph"><p style="font-size:22px;font-weight:700;letter-spacing:-.3px">근무 설정</p><p style="font-size:12px;color:var(--tx2);margin-top:2px">근무 코드 등록 &amp; 테마 변경</p></div>
+    <div class="sv" style="padding-top:10px">
+
+      <!-- THEME SECTION -->
+      <div class="sl">🎨 테마 선택</div>
+      <div class="cd">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px" id="theme-grid"></div>
+      </div>
+
+      <div class="sl">근무 유형 추가</div>
+      <div class="cd">
+        <div class="g2" style="margin-bottom:8px">
+          <div><p class="lb">코드</p><input type="text" id="sc" placeholder="D" maxlength="4" style="text-transform:uppercase;font-family:'DM Mono',monospace;font-weight:700;font-size:16px"></div>
+          <div><p class="lb">근무명</p><input type="text" id="sn" placeholder="데이 근무"></div>
+        </div>
+        <div class="g2" style="margin-bottom:8px">
+          <div><p class="lb">출근 시간</p><input type="time" id="st" value="07:00"></div>
+          <div><p class="lb">근무 시간(h)</p><input type="number" id="sh" value="8" min="1" max="24" style="font-family:'DM Mono',monospace"></div>
+        </div>
+        <div style="margin-bottom:8px"><p class="lb">알람 시점</p>
+          <select id="sb"><option value="0">출근 정각</option><option value="30">30분 전</option><option value="60">1시간 전</option><option value="90">1.5시간 전</option><option value="120" selected>2시간 전</option><option value="180">3시간 전</option><option value="240">4시간 전</option></select>
+        </div>
+        <div style="margin-bottom:10px"><p class="lb">색상 선택</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+            <div class="sw sel" style="background:#f0a830" onclick="pickColor('#f0a830',this)"></div>
+            <div class="sw" style="background:#38a8f0" onclick="pickColor('#38a8f0',this)"></div>
+            <div class="sw" style="background:#a070f8" onclick="pickColor('#a070f8',this)"></div>
+            <div class="sw" style="background:#25c06a" onclick="pickColor('#25c06a',this)"></div>
+            <div class="sw" style="background:#f05555" onclick="pickColor('#f05555',this)"></div>
+            <div class="sw" style="background:#f070c0" onclick="pickColor('#f070c0',this)"></div>
+            <div class="sw" style="background:#50b8b0" onclick="pickColor('#50b8b0',this)"></div>
+            <div class="sw" style="background:#888888" onclick="pickColor('#888888',this)"></div>
+          </div>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:10px;font-size:13px;color:var(--tx2)">
+          <input type="checkbox" id="soff" style="width:auto;accent-color:var(--acc)"> 휴무일 (알람 없음)
+        </label>
+        <button class="btn bp" onclick="addShift()">+ 추가하기</button>
+      </div>
+
+      <div class="sl">등록된 근무 유형</div>
+      <div id="sl-wrap"><div class="cd"><p style="font-size:13px;color:var(--tx2)">아직 없어요</p></div></div>
+
+      <div class="sl">알람음</div>
+      <div class="cd">
+        <div class="g2">
+          <div><p class="lb">소리</p><select id="sound-sel">
+            <option value="beep">기본 비프</option>
+            <option value="bell">벨 소리</option>
+            <option value="digital">디지털</option>
+            <option value="gentle">잔잔한</option>
+            <option value="chime">차임벨</option>
+            <option value="urgent">긴급</option>
+            <option value="marimba">마림바</option>
+            <option value="classic">클래식 알람</option>
+            <option value="custom">내 알람음</option>
+          </select></div>
+          <div style="display:flex;align-items:flex-end"><button class="btn bgh" onclick="testSound()" style="height:44px;margin-top:0;font-size:12px">▶ 미리듣기</button></div>
+        </div>
+        <div style="margin-top:14px;padding-top:14px;border-top:.5px solid var(--brd)">
+          <p class="lb">내 파일로 커스텀 알람음</p>
+          <p style="font-size:11px;color:var(--tx3);margin-bottom:8px;line-height:1.5">⚠️ 저작권 보호를 위해 본인이 소유한 음원 파일만 선택할 수 있어요. 인터넷에서 내려받은 음악을 임의로 사용하면 저작권법에 위배될 수 있으니, 직접 녹음했거나 정식으로 구매·보유한 파일만 넣어주세요.</p>
+          <label for="custom-sound-input">
+            <div class="uzn" id="custom-sound-zone" style="padding:16px">🎵 내 오디오 파일 선택</div>
+          </label>
+          <input type="file" id="custom-sound-input" accept="audio/*" onchange="handleCustomSound(this)">
+          <div class="stmsg" id="custom-sound-info"></div>
+          <button class="btn bgh" onclick="removeCustomSound()" style="font-size:12px">커스텀 알람음 삭제</button>
+        </div>
+      </div>
+
+      <div class="sl">🔑 Claude API 키</div>
+      <div class="cd">
+        <p style="font-size:12px;color:var(--tx2);margin-bottom:8px;line-height:1.6">사진 자동 분석 기능에 필요해요. <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--acc)">console.anthropic.com</a>에서 발급받은 키를 입력하세요. 키는 이 기기의 브라우저에만 저장되고 서버로 전송되지 않아요.</p>
+        <input type="password" id="api-key-input" placeholder="sk-ant-...">
+        <button class="btn bgh" onclick="saveApiKey()">저장</button>
+        <div class="stmsg" id="api-key-status"></div>
+      </div>
+
+      <div class="sl">📲 홈 화면에 추가하기</div>
+      <div class="warn">
+        <b>iOS(사파리):</b> 하단 공유 버튼 → "홈 화면에 추가"<br>
+        <b>Android(크롬):</b> 우측 상단 메뉴(⋮) → "홈 화면에 추가" 또는 앱 설치 팝업<br>
+        홈 화면에 추가하면 앱처럼 전체 화면으로 실행되고, 알림도 더 안정적으로 동작해요.
+      </div>
+
+      <div class="sl">🔔 백업 알림 서버 (선택)</div>
+      <div class="cd">
+        <p style="font-size:12px;color:var(--tx2);margin-bottom:8px;line-height:1.6">앱을 완전히 꺼둬도 알람이 오도록 백업 서버를 연결할 수 있어요. 아직 서버가 없다면 비워두셔도 돼요 — 지금처럼 앱을 최근에 열어둔 상태의 알람은 그대로 작동해요.</p>
+        <p class="lb">서버 주소</p>
+        <input type="text" id="backend-url-input" placeholder="https://your-app.onrender.com">
+        <p class="lb" style="margin-top:8px">동기화 비밀키</p>
+        <input type="password" id="sync-secret-input" placeholder="서버에 설정한 SYNC_SECRET과 동일하게">
+        <button class="btn bgh" onclick="saveBackendConfig()">저장 및 연결</button>
+        <div class="stmsg" id="backend-status"></div>
+        <div style="margin-top:6px"><span class="badge no" id="push-badge">미설정</span></div>
+      </div>
+
+      <div class="sl">🔋 배터리 최적화 해제 (Android)</div>
+      <div class="warn">
+        백업 알림을 켰어도 제조사 배터리 절전 기능이 브라우저 앱을 재워버리면 알림이 늦게 오거나 씹힐 수 있어요. 아래 설정으로 예외 처리해 주세요.<br><br>
+        <b>삼성(One UI):</b> 설정 → 배터리 및 디바이스 케어 → 배터리 → 백그라운드 사용량 제한 → Chrome(또는 사용 브라우저) 찾아서 "제한 없음"으로 변경<br><br>
+        <b>샤오미(MIUI):</b> 설정 → 앱 → 앱 관리 → Chrome → 배터리 절약 → "제한 없음"<br><br>
+        <b>일반 Android:</b> 설정 → 앱 → Chrome → 배터리 → "최적화 안 함"
+      </div>
+
+      <div class="sl">⚠️ 데이터 초기화</div>
+      <div class="cd">
+        <p style="font-size:12px;color:var(--tx2);margin-bottom:10px;line-height:1.6">사진·텍스트·직접입력 중 어떤 방법으로 넣었든 새 스케줄은 기존 날짜와 자동으로 합쳐져요(같은 날짜만 덮어써짐). 완전히 새로 시작하고 싶을 때만 아래를 눌러주세요.</p>
+        <button class="btn bgh" onclick="resetAllSchedule()" style="border-color:#f05555;color:#f05555">스케줄 전체 초기화</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- INPUT -->
+  <div id="s3" class="scr">
+    <div class="ph"><p style="font-size:22px;font-weight:700;letter-spacing:-.3px">스케줄 입력</p><p style="font-size:12px;color:var(--tx2);margin-top:2px">이번 달 근무표를 넣어주세요</p></div>
+    <div class="sv" style="padding-top:10px">
+      <div class="pts">
+        <button class="pt act" id="pt0" onclick="switchIT(0)">📷 사진 분석</button>
+        <button class="pt" id="pt1" onclick="switchIT(1)">✏️ 텍스트</button>
+        <button class="pt" id="pt2" onclick="switchIT(2)">📅 직접 입력</button>
+      </div>
+
+      <!-- PHOTO AI PANEL -->
+      <div id="ip0">
+        <div class="cd">
+          <p class="lb" style="margin-bottom:8px">근무표 사진 업로드</p>
+          <label for="sched-photo">
+            <div class="uzn" id="photo-zone">
+              <div style="font-size:32px;margin-bottom:8px">📸</div>
+              <p style="font-size:14px;font-weight:500">근무표 사진을 올려주세요</p>
+              <p style="font-size:11px;color:var(--tx3);margin-top:4px">JPG, PNG · AI가 자동으로 분석해요</p>
+            </div>
+          </label>
+          <input type="file" id="sched-photo" accept="image/*" onchange="handlePhoto(this)">
+          <img id="photo-prev" class="ipr">
+        </div>
+        <div class="cd" id="photo-name-card" style="display:none">
+          <p class="lb" style="margin-bottom:6px">내 이름 입력 <span style="color:var(--acc);font-size:10px;text-transform:none;letter-spacing:0">전체 근무표에서 내 행만 찾아요</span></p>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="text" id="my-name" placeholder="예: 김재윤, 홍길동" style="flex:1">
+            <div id="name-check" style="display:none;width:28px;height:28px;border-radius:50%;background:#25c06a;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">✓</div>
+          </div>
+          <p style="font-size:11px;color:var(--tx3);margin-top:6px;line-height:1.5">이름을 입력하면 AI가 근무표에서 해당 직원의 행만 추출해요. 비워두면 전체 스케줄을 분석해요.</p>
+          <div id="name-history" style="display:none;margin-top:8px">
+            <p style="font-size:10px;color:var(--tx3);margin-bottom:4px">최근 사용</p>
+            <div id="name-history-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+          </div>
+        </div>
+        <div class="cd" style="background:var(--bg3)" id="photo-shift-info">
+          <p style="font-size:11px;color:var(--tx2);margin-bottom:6px">분석에 사용할 근무 코드</p>
+          <div id="ic" style="display:flex;flex-wrap:wrap;gap:6px"><span style="font-size:12px;color:var(--tx3)">설정 탭에서 먼저 근무 유형을 등록해 주세요</span></div>
+          <p style="font-size:11px;color:var(--tx3);margin-top:8px">※ 등록된 코드 기준으로 AI가 사진을 읽어요. 코드가 없어도 자동 추출을 시도해요.</p>
+        </div>
+        <button class="btn bp" id="ai-btn" onclick="analyzePhoto()" style="display:none">🤖 AI로 스케줄 분석하기</button>
+        <div class="stmsg" id="ai-status"></div>
+        <div id="ai-preview" style="display:none">
+          <div class="sl">AI 분석 결과 미리보기</div>
+          <div class="cd" id="ai-result-list"></div>
+          <button class="btn bp" onclick="applyAIResult()">✓ 이 스케줄로 설정하기</button>
+          <button class="btn bgh" onclick="resetPhoto()" style="margin-top:6px">다시 분석하기</button>
+        </div>
+      </div>
+
+      <!-- TEXT PANEL -->
+      <div id="ip1" style="display:none">
+        <div class="cd"><p class="lb" style="margin-bottom:6px">근무표 텍스트</p>
+          <textarea id="itx" placeholder="예시:&#10;3/1 D, 3/2 D, 3/3 O, 3/4 N, 3/5 N...&#10;또는 1-D 2-D 3-O 4-N&#10;어떤 형식이든 OK"></textarea>
+        </div>
+        <div class="cd" style="background:var(--bg3)"><p style="font-size:11px;color:var(--tx2);margin-bottom:6px">등록된 코드</p><div id="ic2" style="display:flex;flex-wrap:wrap;gap:6px"><span style="font-size:12px;color:var(--tx3)">설정 탭에서 먼저 등록해 주세요</span></div></div>
+        <button class="btn bp" onclick="parseSchedule()">스케줄 분석하기</button>
+        <div id="ps" class="stmsg"></div>
+      </div>
+
+      <!-- MANUAL PANEL -->
+      <div id="ip2" style="display:none">
+        <div class="cd">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <button onclick="mprev()" style="border:.5px solid var(--brd2);background:none;border-radius:8px;padding:6px 14px;cursor:pointer;color:var(--tx);font-size:14px">‹</button>
+            <span style="font-size:14px;font-weight:600" id="mlbl"></span>
+            <button onclick="mnext()" style="border:.5px solid var(--brd2);background:none;border-radius:8px;padding:6px 14px;cursor:pointer;color:var(--tx);font-size:14px">›</button>
+          </div>
+          <div class="ch"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+          <div class="cg" id="mcal"></div>
+        </div>
+        <div class="cd" id="mpick" style="display:none">
+          <p style="font-size:12px;color:var(--tx2);margin-bottom:8px" id="mpd"></p>
+          <div id="mpb" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+          <button class="btn bgh" style="margin-top:8px;font-size:12px" onclick="clearDay()">이 날 지우기</button>
+        </div>
+        <button class="btn bp" onclick="applyManual()">이 스케줄로 설정하기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDAR -->
+  <div id="s4" class="scr">
+    <div class="ph" style="display:flex;align-items:center;justify-content:space-between">
+      <div><p style="font-size:22px;font-weight:700;letter-spacing:-.3px">캘린더</p><p id="cml" style="font-size:12px;color:var(--tx2);margin-top:2px"></p></div>
+      <div style="display:flex;gap:6px">
+        <button onclick="cp()" style="border:.5px solid var(--brd2);background:none;border-radius:8px;padding:6px 12px;cursor:pointer;color:var(--tx);font-size:15px">‹</button>
+        <button onclick="cn()" style="border:.5px solid var(--brd2);background:none;border-radius:8px;padding:6px 12px;cursor:pointer;color:var(--tx);font-size:15px">›</button>
+      </div>
+    </div>
+    <div class="sv" style="padding-top:10px">
+      <div style="background:var(--bg2);border:.5px solid var(--brd);border-radius:18px;padding:14px;margin-bottom:10px">
+        <div class="ch"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+        <div class="cg" id="cg"></div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px" id="cl"></div>
+      <div id="cdet" style="display:none">
+        <div class="sl" id="cdlbl"></div>
+        <div class="cd" id="cdcard"></div>
+      </div>
+      <div class="sl">개별 알람 설정</div>
+      <div class="cd">
+        <p style="font-size:12px;color:var(--tx2);margin-bottom:8px">특정 날짜만 알람 시간을 따로 설정해요</p>
+        <div class="g2" style="margin-bottom:8px">
+          <div><p class="lb">날짜</p><input type="text" id="cda" placeholder="2026-03-05" style="font-family:'DM Mono',monospace"></div>
+          <div><p class="lb">알람 시간</p><input type="time" id="cat" value="06:00"></div>
+        </div>
+        <div style="margin-bottom:8px"><p class="lb">메모 (선택)</p><input type="text" id="cmm" placeholder="예: OO 선생님과 교대"></div>
+        <button class="btn bgh" onclick="addCA()" style="margin-top:0">+ 개별 알람 추가</button>
+        <div id="ical" style="margin-top:8px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALARMS -->
+  <div id="s5" class="scr">
+    <div class="ph" style="display:flex;justify-content:space-between;align-items:center">
+      <div><p style="font-size:22px;font-weight:700;letter-spacing:-.3px">알람</p><p id="als" style="font-size:12px;color:var(--tx2);margin-top:2px">설정된 알람</p></div>
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;color:var(--tx2)">전체</span><button class="tg on" id="mtg" onclick="masterTG(this)"></button></div>
+    </div>
+    <div class="sv" style="padding-top:10px">
+      <div class="cd" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div>
+          <p style="font-size:13px;font-weight:500">알림 권한</p>
+          <p style="font-size:11px;color:var(--tx2);margin-top:2px">알람이 울리려면 알림을 허용해야 해요</p>
+        </div>
+        <button class="badge no" id="notif-badge" onclick="requestNotifPermission()" style="border:none;cursor:pointer">확인 중…</button>
+      </div>
+      <div class="warn">⚠️ 브라우저/PWA 알람은 앱이 화면에 떠 있거나 최근 사용 목록에 남아있을 때 가장 안정적으로 울려요. 완전히 종료하거나 기기를 재부팅하면 예약된 알람이 사라질 수 있어요. 앱을 열 때마다 자동으로 알람이 다시 설정돼요.</div>
+      <div class="cd" id="al"><p style="font-size:13px;color:var(--tx2)">스케줄 분석 후 표시돼요</p></div>
+    </div>
+  </div>
+
+  <div class="bnav">
+    <div class="ni" onclick="go(1)" id="n1"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="nl">홈</span></div>
+    <div class="ni" onclick="go(2)" id="n2"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M12 2v2M12 20v2M2 12h2M20 12h2"/></svg><span class="nl">설정</span></div>
+    <div class="ni" onclick="go(3)" id="n3">
+      <div style="width:44px;height:44px;border-radius:50%;background:var(--acc);display:flex;align-items:center;justify-content:center;margin-top:-16px;box-shadow:0 4px 20px var(--accg)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" style="width:20px;height:20px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </div>
+      <span class="nl">입력</span>
+    </div>
+    <div class="ni" onclick="go(4)" id="n4"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span class="nl">캘린더</span></div>
+    <div class="ni" onclick="go(5)" id="n5"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="nl">알람</span></div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+const W=['일','월','화','수','목','금','토'];
+let shifts=[],sched=[],custAlarms={},memos={},offAlarms={};
+const now0=new Date();
+let calY=now0.getFullYear(),calM=now0.getMonth();
+let manY=calY,manM=calM,manD={},selDay=null;
+let selColor='#f0a830',aTimers=[],audioCtx=null,cdTimer=null;
+let obP=0;
+let aiResult=[];
+let photoB64=null,photoMime=null;
+let curTheme='dark';
+let nameHistory=[];
+let apiKey='';
+
+const STORE_KEY='shiftAlarmV3State';
+const API_KEY_STORE='shiftAlarmV3ApiKey';
+
+// ── PERSISTENCE ──
+function persist(){
+  try{
+    localStorage.setItem(STORE_KEY,JSON.stringify({shifts,sched,custAlarms,memos,offAlarms,curTheme,nameHistory,soundSel:(document.getElementById('sound-sel')||{}).value}));
+  }catch(e){}
+}
+function restore(){
+  try{
+    const raw=localStorage.getItem(STORE_KEY);
+    if(raw){
+      const d=JSON.parse(raw);
+      shifts=d.shifts||[];sched=d.sched||[];custAlarms=d.custAlarms||{};memos=d.memos||{};offAlarms=d.offAlarms||{};
+      curTheme=d.curTheme||'dark';nameHistory=d.nameHistory||[];
+      if(d.soundSel)document.getElementById('sound-sel').value=d.soundSel;
+    }
+    apiKey=localStorage.getItem(API_KEY_STORE)||'';
+  }catch(e){}
+}
+
+// ── THEMES ──
+const THEMES = [
+  {id:'dark',   name:'다크',   bg:'#0a0a10', acc:'#7c6ef7', preview:['#0a0a10','#7c6ef7','#12121a']},
+  {id:'light',  name:'라이트', bg:'#f5f5fa', acc:'#7c6ef7', preview:['#f5f5fa','#7c6ef7','#ffffff']},
+  {id:'mint',   name:'민트',   bg:'#0a110e', acc:'#2dba6e', preview:['#0a110e','#2dba6e','#111a15']},
+  {id:'sunset', name:'선셋',   bg:'#110a08', acc:'#f07030', preview:['#110a08','#f07030','#1a1008']},
+  {id:'rose',   name:'로즈',   bg:'#110810', acc:'#d060c0', preview:['#110810','#d060c0','#1a0e18']},
+  {id:'ocean',  name:'오션',   bg:'#08100e', acc:'#2090d0', preview:['#08100e','#2090d0','#0e181a']},
+];
+
+function renderThemeGrid(){
+  const g=document.getElementById('theme-grid');
+  g.innerHTML=THEMES.map(t=>`
+    <div class="theme-card${t.id===curTheme?' sel-theme':''}" onclick="applyTheme('${t.id}')"
+      style="background:${t.preview[0]};border-color:${t.id===curTheme?t.preview[1]:'transparent'}">
+      <div class="tc-check">✓</div>
+      <div style="display:flex;gap:4px;margin-bottom:6px">
+        <div style="width:12px;height:12px;border-radius:50%;background:${t.preview[1]}"></div>
+        <div style="width:12px;height:12px;border-radius:50%;background:${t.preview[2]}"></div>
+      </div>
+      <p style="font-size:11px;font-weight:600;color:${t.preview[1]}">${t.name}</p>
+    </div>
+  `).join('');
+}
+
+function applyTheme(id){
+  curTheme=id;
+  document.getElementById('app').setAttribute('data-theme',id);
+  const meta=document.getElementById('theme-color-meta');
+  const t=THEMES.find(x=>x.id===id);
+  if(meta&&t)meta.setAttribute('content',t.bg);
+  renderThemeGrid();
+  persist();
+}
+
+// ── AUDIO ──
+function gAC(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+const SOUND_PRESETS={
+  beep:{wave:'square',notes:[{f:880,t:0,d:.12},{f:880,t:.18,d:.12},{f:1100,t:.36,d:.28}]},
+  bell:{wave:'sine',notes:[{f:1046,t:0,d:.8},{f:784,t:.9,d:.7},{f:523,t:1.7,d:1}]},
+  digital:{wave:'square',notes:[{f:1400,t:0,d:.07},{f:1400,t:.1,d:.07},{f:1400,t:.2,d:.07},{f:1800,t:.33,d:.2}]},
+  gentle:{wave:'sine',notes:[{f:440,t:0,d:.7},{f:550,t:.8,d:.6},{f:660,t:1.5,d:.9}]},
+  chime:{wave:'sine',notes:[{f:523,t:0,d:.5},{f:659,t:.4,d:.5},{f:784,t:.8,d:.9}]},
+  urgent:{wave:'square',notes:[{f:1000,t:0,d:.1},{f:1000,t:.15,d:.1},{f:1000,t:.3,d:.1},{f:1000,t:.45,d:.1},{f:1000,t:.6,d:.2}]},
+  marimba:{wave:'triangle',notes:[{f:392,t:0,d:.25},{f:494,t:.2,d:.25},{f:587,t:.4,d:.25},{f:784,t:.6,d:.5}]},
+  classic:{wave:'sawtooth',notes:[{f:800,t:0,d:.15},{f:600,t:.18,d:.15},{f:800,t:.36,d:.15},{f:600,t:.54,d:.15},{f:800,t:.72,d:.15},{f:600,t:.9,d:.2}]}
+};
+function beep(t){
+  try{
+    const c=gAC();
+    const sel=t||(document.getElementById('sound-sel')||{value:'beep'}).value;
+    const preset=SOUND_PRESETS[sel]||SOUND_PRESETS.beep;
+    preset.notes.forEach(({f,t:ti,d})=>{const o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.type=preset.wave;o.frequency.value=f;const n=c.currentTime;g.gain.setValueAtTime(0,n+ti);g.gain.linearRampToValueAtTime(.18,n+ti+.02);g.gain.linearRampToValueAtTime(0,n+ti+d);o.start(n+ti);o.stop(n+ti+d+.05);});
+    if(navigator.vibrate)navigator.vibrate([200,100,200]);
+  }catch(e){}
+}
+
+// ── CUSTOM SOUND (IndexedDB) ──
+// Users may only pick audio files they already own — we never fetch or
+// bundle copyrighted tracks. This just plays a local file back locally.
+const IDB_NAME='shiftAlarmDB', IDB_STORE='sounds';
+let customSoundUrl=null;
+function idbOpen(){
+  return new Promise((resolve,reject)=>{
+    const req=indexedDB.open(IDB_NAME,1);
+    req.onupgradeneeded=()=>{req.result.createObjectStore(IDB_STORE);};
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+}
+async function idbSaveCustomSound(blob,name){
+  const db=await idbOpen();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(IDB_STORE,'readwrite');
+    tx.objectStore(IDB_STORE).put({blob,name},'custom');
+    tx.oncomplete=()=>resolve();
+    tx.onerror=()=>reject(tx.error);
+  });
+}
+async function idbGetCustomSound(){
+  const db=await idbOpen();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(IDB_STORE,'readonly');
+    const req=tx.objectStore(IDB_STORE).get('custom');
+    req.onsuccess=()=>resolve(req.result||null);
+    req.onerror=()=>reject(req.error);
+  });
+}
+async function idbDeleteCustomSound(){
+  const db=await idbOpen();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction(IDB_STORE,'readwrite');
+    tx.objectStore(IDB_STORE).delete('custom');
+    tx.oncomplete=()=>resolve();
+    tx.onerror=()=>reject(tx.error);
+  });
+}
+async function handleCustomSound(input){
+  const f=input.files[0];if(!f)return;
+  if(f.size>15*1024*1024){alert('파일이 너무 커요 (15MB 이하로 선택해 주세요)');input.value='';return;}
+  try{
+    await idbSaveCustomSound(f,f.name);
+    customSoundUrl=null;
+    document.getElementById('sound-sel').value='custom';
+    updateCustomSoundInfo(f.name);
+    persist();
+  }catch(e){
+    document.getElementById('custom-sound-info').textContent='저장 실패: '+e.message;
+  }
+}
+async function removeCustomSound(){
+  try{await idbDeleteCustomSound();}catch(e){}
+  customSoundUrl=null;
+  updateCustomSoundInfo('');
+  if(document.getElementById('sound-sel').value==='custom')document.getElementById('sound-sel').value='beep';
+  persist();
+}
+function updateCustomSoundInfo(name){
+  document.getElementById('custom-sound-info').textContent=name?`✓ 저장됨: ${name}`:'';
+}
+async function initCustomSoundInfo(){
+  try{const rec=await idbGetCustomSound();if(rec)updateCustomSoundInfo(rec.name);}catch(e){}
+}
+async function playAlarmSound(){
+  const sel=(document.getElementById('sound-sel')||{value:'beep'}).value;
+  if(sel==='custom'){
+    try{
+      const rec=await idbGetCustomSound();
+      if(rec&&rec.blob){
+        if(!customSoundUrl)customSoundUrl=URL.createObjectURL(rec.blob);
+        const audio=new Audio(customSoundUrl);
+        await audio.play().catch(()=>{});
+        if(navigator.vibrate)navigator.vibrate([200,100,200]);
+        return;
+      }
+    }catch(e){}
+    beep('beep');
+    return;
+  }
+  beep(sel);
+}
+function testSound(){playAlarmSound();persist();}
+
+// ── ONBOARDING ──
+function obNext(){
+  if(obP<2){
+    const cur=document.getElementById('ob'+obP);cur.style.opacity='0';
+    setTimeout(()=>{cur.style.display='none';obP++;const nx=document.getElementById('ob'+obP);nx.style.display='block';setTimeout(()=>{nx.style.opacity='1';},30);},280);
+    [0,1,2].forEach(i=>{const d=document.getElementById('d'+i);d.style.width=i===obP+1?'18px':'6px';d.style.background=i===obP+1?'var(--acc)':'var(--brd2)';});
+    if(obP+1===2)document.getElementById('ob-btn').textContent='시작하기';
+  } else goMain();
+}
+function goMain(){
+  document.getElementById('s0').classList.remove('act');
+  try{localStorage.setItem('shiftAlarmV3Onboarded','1');}catch(e){}
+  go(1);
+}
+
+// ── NAV ──
+function go(n){
+  for(let i=1;i<=5;i++){
+    const s=document.getElementById('s'+i),ni=document.getElementById('n'+i);
+    s.classList.toggle('act',i===n);
+    if(ni){ni.classList.toggle('act',i===n);ni.querySelector('svg')?.setAttribute('stroke',i===n?'var(--acc)':'var(--tx3)');const nl=ni.querySelector('.nl');if(nl)nl.style.color=i===n?'var(--acc)':'';}
+  }
+  if(n===1)rHome();if(n===4)rCal();if(n===5){rAlarms();updateNotifBadge();}if(n===3)rIChips();
+}
+
+// ── COLORS ──
+function pickColor(c,el){selColor=c;document.querySelectorAll('.sw').forEach(s=>s.classList.remove('sel'));el.classList.add('sel');}
+function cs(s){return`background:${s.color}22;color:${s.color};border-color:${s.color}55`;}
+
+// ── API KEY ──
+function saveApiKey(){
+  const v=document.getElementById('api-key-input').value.trim();
+  const st=document.getElementById('api-key-status');
+  if(!v){localStorage.removeItem(API_KEY_STORE);apiKey='';st.textContent='API 키를 삭제했어요';return;}
+  apiKey=v;
+  try{localStorage.setItem(API_KEY_STORE,v);}catch(e){}
+  st.textContent='✓ 저장 완료';
+  document.getElementById('api-key-input').value='';
+  updateApiKeyUI();
+}
+function updateApiKeyUI(){
+  const st=document.getElementById('api-key-status');
+  const input=document.getElementById('api-key-input');
+  if(apiKey){input.placeholder='저장됨 (********'+apiKey.slice(-4)+')';}
+}
+
+// ── SHIFTS ──
+function addShift(){
+  const code=document.getElementById('sc').value.trim().toUpperCase();
+  const name=document.getElementById('sn').value.trim();
+  const time=document.getElementById('st').value;
+  const hours=parseFloat(document.getElementById('sh').value)||8;
+  const before=parseInt(document.getElementById('sb').value);
+  const isOff=document.getElementById('soff').checked;
+  if(!code||!name){alert('코드와 근무명을 입력해 주세요');return;}
+  if(shifts.find(s=>s.code===code)){alert('이미 있는 코드예요');return;}
+  shifts.push({code,name,time,hours,before,isOff,color:selColor});
+  document.getElementById('sc').value='';document.getElementById('sn').value='';
+  rShiftList();rIChips();persist();
+}
+function rmShift(i){shifts.splice(i,1);rShiftList();rIChips();persist();}
+function rShiftList(){
+  const w=document.getElementById('sl-wrap');
+  if(!shifts.length){w.innerHTML='<div class="cd"><p style="font-size:13px;color:var(--tx2)">아직 없어요</p></div>';return;}
+  w.innerHTML=shifts.map((s,i)=>`<div class="cd3" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:10px"><span class="chip" style="${cs(s)}">${s.code}</span><div><p style="font-size:13px;font-weight:500">${s.name}</p><p style="font-size:11px;color:var(--tx2)">${s.isOff?'휴무':s.time+' · '+s.before+'분 전 · '+s.hours+'h'}</p></div></div><button onclick="rmShift(${i})" style="border:none;background:none;color:#f05555;cursor:pointer;font-size:20px;padding:6px;line-height:1">×</button></div>`).join('');
+}
+function rIChips(){
+  const html=shifts.length?shifts.map(s=>`<span class="chip" style="${cs(s)}">${s.code} ${s.isOff?'휴':s.time}</span>`).join(''):'<span style="font-size:12px;color:var(--tx3)">설정 탭에서 먼저 등록해 주세요</span>';
+  document.getElementById('ic').innerHTML=html;
+  const ic2=document.getElementById('ic2');if(ic2)ic2.innerHTML=html;
+}
+
+// ── SCHEDULE MERGE ──
+// Upserts by date so entering a new month (via photo/text/manual) never
+// wipes out dates already recorded through a different input method.
+function mergeSchedule(newItems){
+  const map={};
+  sched.forEach(item=>{map[item.date]=item.code;});
+  newItems.forEach(item=>{map[item.date]=item.code;});
+  sched=Object.entries(map).map(([date,code])=>({date,code})).sort((a,b)=>a.date.localeCompare(b.date));
+}
+function resetAllSchedule(){
+  if(!confirm('저장된 모든 스케줄과 개별 알람, 메모가 삭제돼요. 계속할까요?'))return;
+  sched=[];custAlarms={};memos={};offAlarms={};
+  aTimers.forEach(clearTimeout);aTimers=[];
+  persist();rCal();rAlarms();rHome();rCAList();
+  alert('스케줄을 초기화했어요');
+}
+
+// ── ALARM TIME ──
+function gAT(item){
+  const s=shifts.find(x=>x.code===item.code);if(!s||s.isOff)return null;
+  if(custAlarms[item.date])return custAlarms[item.date];
+  const[h,m]=s.time.split(':').map(Number);const t=h*60+m-s.before;
+  const ah=Math.floor(((t%1440)+1440)%1440/60),am=((t%1440)+1440)%60;
+  return`${String(ah).padStart(2,'0')}:${String(am).padStart(2,'0')}`;
+}
+
+// ── NOTIFICATION PERMISSION ──
+function updateNotifBadge(){
+  const b=document.getElementById('notif-badge');
+  if(!('Notification' in window)){b.textContent='미지원';b.className='badge no';return;}
+  if(Notification.permission==='granted'){b.textContent='✓ 허용됨';b.className='badge ok';}
+  else if(Notification.permission==='denied'){b.textContent='차단됨';b.className='badge no';}
+  else{b.textContent='허용하기';b.className='badge no';}
+}
+function requestNotifPermission(){
+  if(!('Notification' in window)){alert('이 브라우저는 알림을 지원하지 않아요');return;}
+  Notification.requestPermission().then(()=>{updateNotifBadge();setAlarms();subscribeToPush();});
+}
+
+// ── SET ALARMS ──
+// Single source of truth for "what alarms are pending" — used both to arm
+// the local setTimeout timers (works while the app is open/recently
+// backgrounded) and to build the payload synced to the backup push server
+// (works even if the app is fully closed). Keeping one function means the
+// two paths can never silently drift apart.
+function computeAlarmList(){
+  const now=Date.now();
+  const list=[];
+  sched.forEach(item=>{
+    if(offAlarms[item.date])return;
+    const s=shifts.find(x=>x.code===item.code);if(!s||s.isOff)return;
+    const[h,m]=s.time.split(':').map(Number);const d=new Date(item.date);d.setHours(h,m,0,0);
+    let at;
+    if(custAlarms[item.date]){const[ch,cm]=custAlarms[item.date].split(':').map(Number);const cd=new Date(item.date);cd.setHours(ch,cm,0,0);at=cd.getTime();}
+    else at=d.getTime()-s.before*60000;
+    if(at>now){
+      list.push({id:item.date,epochMs:at,title:`근무 알람: ${s.name}`,body:`${item.date} ${s.name} (${s.time} 출근)`});
+    }
+  });
+  return list;
+}
+function setAlarms(){
+  aTimers.forEach(clearTimeout);aTimers=[];
+  syncScheduleToServer();
+  if(!('Notification' in window))return;
+  if(Notification.permission!=='granted')return;
+  const now=Date.now();
+  computeAlarmList().forEach(a=>{
+    const id=setTimeout(()=>{playAlarmSound();try{new Notification(a.title,{body:a.body});}catch(e){}},a.epochMs-now);
+    aTimers.push(id);
+  });
+}
+
+// ── BACKUP PUSH (works even if the app is fully closed) ──
+const VAPID_PUBLIC_KEY='BNt1J__AWKou5Jfw8bvc5byU9rqjRh8FYKsmoWCjL5l8i4ZO_b0IMw3nTINI433jMq3p1YgP38sf0hikdSETeX4';
+function getDeviceId(){
+  let id=localStorage.getItem('shiftAlarmDeviceId');
+  if(!id){id=(crypto.randomUUID?crypto.randomUUID():'dev-'+Date.now()+'-'+Math.random().toString(36).slice(2));localStorage.setItem('shiftAlarmDeviceId',id);}
+  return id;
+}
+function getBackendUrl(){return(localStorage.getItem('shiftAlarmBackendUrl')||'').trim().replace(/\/$/,'');}
+function syncHeaders(){
+  const secret=(localStorage.getItem('shiftAlarmSyncSecret')||'').trim();
+  return secret?{'x-sync-secret':secret}:{};
+}
+function urlBase64ToUint8Array(base64String){
+  const padding='='.repeat((4-base64String.length%4)%4);
+  const base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/');
+  const raw=atob(base64);
+  const arr=new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++)arr[i]=raw.charCodeAt(i);
+  return arr;
+}
+function updatePushBadge(state){
+  const b=document.getElementById('push-badge');
+  if(!b)return;
+  if(state===true){b.textContent='✓ 백업 알림 연결됨';b.className='badge ok';}
+  else if(state===false){b.textContent='연결 안 됨';b.className='badge no';}
+  else{b.textContent='미설정';b.className='badge no';}
+}
+async function syncScheduleToServer(){
+  const backendUrl=getBackendUrl();
+  if(!backendUrl)return;
+  try{
+    await fetch(backendUrl+'/sync',{
+      method:'POST',
+      headers:Object.assign({'Content-Type':'application/json'},syncHeaders()),
+      body:JSON.stringify({deviceId:getDeviceId(),alarms:computeAlarmList()})
+    });
+  }catch(e){/* offline or server down — local timer still covers this while the app is open */}
+}
+async function subscribeToPush(){
+  const backendUrl=getBackendUrl();
+  if(!backendUrl)return false;
+  if(!('serviceWorker' in navigator)||!('PushManager' in window)){updatePushBadge(false);return false;}
+  if(Notification.permission!=='granted')return false;
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub){
+      sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)});
+    }
+    await fetch(backendUrl+'/subscribe',{
+      method:'POST',
+      headers:Object.assign({'Content-Type':'application/json'},syncHeaders()),
+      body:JSON.stringify({deviceId:getDeviceId(),subscription:sub})
+    });
+    updatePushBadge(true);
+    return true;
+  }catch(e){
+    updatePushBadge(false);
+    return false;
+  }
+}
+async function checkPushHealth(){
+  const backendUrl=getBackendUrl();
+  const urlInput=document.getElementById('backend-url-input');
+  if(urlInput&&backendUrl)urlInput.placeholder=backendUrl;
+  if(!backendUrl){updatePushBadge(null);return;}
+  if(!('Notification' in window)||Notification.permission!=='granted'){updatePushBadge(false);return;}
+  if(!('serviceWorker' in navigator)){updatePushBadge(false);return;}
+  try{
+    const reg=await navigator.serviceWorker.ready;
+    const sub=await reg.pushManager.getSubscription();
+    if(sub){updatePushBadge(true);syncScheduleToServer();}
+    else{await subscribeToPush();}
+  }catch(e){updatePushBadge(false);}
+}
+async function saveBackendConfig(){
+  const url=document.getElementById('backend-url-input').value.trim().replace(/\/$/,'');
+  const secret=document.getElementById('sync-secret-input').value.trim();
+  localStorage.setItem('shiftAlarmBackendUrl',url);
+  if(secret)localStorage.setItem('shiftAlarmSyncSecret',secret);
+  document.getElementById('backend-url-input').value='';
+  document.getElementById('sync-secret-input').value='';
+  const st=document.getElementById('backend-status');
+  if(!url){st.textContent='백업 서버 연결을 해제했어요';updatePushBadge(null);return;}
+  st.textContent='연결 확인 중...';
+  if(!('Notification' in window)||Notification.permission!=='granted'){
+    st.textContent='먼저 알람 탭에서 알림 권한을 허용해 주세요';
+    updatePushBadge(false);
+    return;
+  }
+  const ok=await subscribeToPush();
+  st.textContent=ok?'✓ 연결 완료! 알람이 이중으로 보호돼요':'연결 실패. 주소와 비밀키를 확인해 주세요';
+  if(ok)syncScheduleToServer();
+}
+
+// ── ALARM ON/OFF TOGGLE ──
+function toggleAlarmDate(date){
+  if(offAlarms[date])delete offAlarms[date];else offAlarms[date]=true;
+  persist();setAlarms();rAlarms();
+  if(document.getElementById('s1').classList.contains('act'))rHome();
+}
+function masterTG(btn){
+  btn.classList.toggle('on');
+  const on=btn.classList.contains('on');
+  if(on)offAlarms={};
+  else sched.forEach(item=>{const s=shifts.find(x=>x.code===item.code);if(s&&!s.isOff)offAlarms[item.date]=true;});
+  persist();setAlarms();rAlarms();
+}
+
+// ── INPUT TABS ──
+function switchIT(i){
+  [0,1,2].forEach(j=>{document.getElementById('pt'+j).classList.toggle('act',j===i);document.getElementById('ip'+j).style.display=j===i?'block':'none';});
+  if(i===2)rManCal();
+}
+
+// ── AI PHOTO ANALYSIS ──
+function handlePhoto(input){
+  const f=input.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    const res=e.target.result;
+    photoB64=res.split(',')[1];photoMime=f.type;
+    const p=document.getElementById('photo-prev');p.src=res;p.style.display='block';
+    document.getElementById('photo-zone').style.display='none';
+    document.getElementById('photo-name-card').style.display='block';
+    document.getElementById('ai-btn').style.display='block';
+    renderNameHistory();
+  };
+  r.readAsDataURL(f);
+}
+
+async function analyzePhoto(){
+  if(!apiKey){document.getElementById('ai-status').textContent='먼저 설정 탭에서 Claude API 키를 등록해 주세요';go(2);return;}
+  const btn=document.getElementById('ai-btn');btn.disabled=true;
+  document.getElementById('ai-status').innerHTML='<span class="spin">⟳</span> AI가 근무표를 읽고 있어요...';
+  document.getElementById('ai-preview').style.display='none';
+
+  const now=new Date();
+  const shiftInfo=shifts.length?shifts.map(s=>`${s.code}=${s.name}(${s.isOff?'휴무':s.time})`).join(', '):'자동 추출';
+  const myName=(document.getElementById('my-name').value||'').trim();
+  if(myName) saveNameHistory(myName);
+
+  const nameInstruction=myName
+    ?`⚠️ 중요: 이 근무표에서 반드시 "${myName}" 직원의 행(줄)만 찾아서 그 사람의 날짜별 스케줄만 추출하세요. 이름이 정확히 일치하지 않아도 가장 유사한 이름을 찾아주세요. 다른 직원 스케줄은 완전히 무시하세요.`
+    :`특정 직원을 지정하지 않음 — 표에서 보이는 스케줄을 추출하세요.`;
+
+  if(myName) document.getElementById('ai-status').innerHTML=`<span class="spin">⟳</span> "${myName}"의 스케줄을 찾고 있어요...`;
+
+  const prompt=`이 근무표 이미지를 분석해서 날짜별 근무 코드를 추출해 주세요.
+
+현재 날짜: ${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일
+등록된 근무 유형: ${shiftInfo}
+
+${nameInstruction}
+
+추출 규칙:
+- 등록된 근무 유형 코드를 우선 사용하고, 없으면 이미지의 코드 그대로 사용
+- 날짜를 특정할 수 없으면 이미지 순서대로 당월 1일부터 매핑
+- 이미지에 월 정보가 있으면 그 월을 사용
+
+JSON 배열로만 응답. 다른 말은 절대 금지:
+[{"date":"2026-03-01","code":"D"},{"date":"2026-03-02","code":"E"},...]`;
+
+  const content=[
+    {type:'image',source:{type:'base64',media_type:photoMime,data:photoB64}},
+    {type:'text',text:prompt}
+  ];
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key':apiKey,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true'
+      },
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:[{role:'user',content}]})
+    });
+    const data=await resp.json();
+    if(data.error)throw new Error(data.error.message);
+    const raw=data.content.map(c=>c.text||'').join('').replace(/```json|```/g,'').trim();
+    aiResult=JSON.parse(raw);
+    aiResult.sort((a,b)=>a.date.localeCompare(b.date));
+    showAIPreview();
+    const nameEl=document.getElementById('my-name').value.trim();
+    const whoMsg=nameEl?`"${nameEl}" 스케줄 `:'';
+    document.getElementById('ai-status').textContent=`✓ ${whoMsg}${aiResult.length}일 분석 완료! 아래에서 확인 후 적용하세요.`;
+  }catch(e){
+    document.getElementById('ai-status').textContent='분석 오류: '+e.message;
+  }
+  btn.disabled=false;
+}
+
+function showAIPreview(){
+  const list=document.getElementById('ai-result-list');
+  const wdays=['일','월','화','수','목','금','토'];
+  list.innerHTML=aiResult.slice(0,14).map(item=>{
+    const shift=shifts.find(s=>s.code===item.code);
+    const d=new Date(item.date);
+    const chipStyle=shift?cs(shift):`background:#333;color:#aaa;border-color:#555`;
+    return`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:.5px solid var(--brd)">
+      <span style="font-size:13px;color:var(--tx2);font-family:'DM Mono',monospace">${item.date.slice(5)} (${wdays[d.getDay()]})</span>
+      <span class="chip" style="${chipStyle}">${item.code}</span>
+    </div>`;
+  }).join('');
+  if(aiResult.length>14)list.innerHTML+=`<p style="font-size:12px;color:var(--tx2);padding:8px 0;text-align:center">+ ${aiResult.length-14}일 더...</p>`;
+  document.getElementById('ai-preview').style.display='block';
+}
+
+function applyAIResult(){
+  if(!aiResult.length)return;
+  mergeSchedule(aiResult);
+  const d=new Date(aiResult.slice().sort((a,b)=>a.date.localeCompare(b.date))[0].date);calY=d.getFullYear();calM=d.getMonth();
+  setAlarms();persist();
+  document.getElementById('ai-status').textContent=`✓ ${aiResult.length}일 스케줄 적용 완료! (기존 다른 날짜는 유지돼요)`;
+  setTimeout(()=>go(1),800);
+}
+
+// ── NAME HISTORY ──
+function saveNameHistory(name){
+  nameHistory=nameHistory.filter(n=>n!==name);
+  nameHistory.unshift(name);
+  if(nameHistory.length>5)nameHistory=nameHistory.slice(0,5);
+  persist();
+}
+function renderNameHistory(){
+  const wrap=document.getElementById('name-history');
+  const chips=document.getElementById('name-history-chips');
+  if(!nameHistory.length){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  chips.innerHTML=nameHistory.map(n=>`<span onclick="selectName('${n}')" style="background:var(--accg);border:.5px solid var(--acc);color:var(--acc);border-radius:99px;font-size:11px;padding:4px 11px;cursor:pointer">${n}</span>`).join('');
+}
+function selectName(n){document.getElementById('my-name').value=n;}
+
+function resetPhoto(){
+  photoB64=null;photoMime=null;aiResult=[];
+  document.getElementById('photo-prev').style.display='none';
+  document.getElementById('photo-zone').style.display='block';
+  document.getElementById('photo-name-card').style.display='none';
+  document.getElementById('ai-btn').style.display='none';
+  document.getElementById('ai-preview').style.display='none';
+  document.getElementById('ai-status').textContent='';
+  document.getElementById('sched-photo').value='';
+}
+
+// ── TEXT PARSE ──
+function parseSchedule(){
+  const txt=document.getElementById('itx').value.trim();
+  if(!txt){alert('스케줄을 입력해 주세요');return;}
+  if(!shifts.length){alert('설정 탭에서 먼저 근무 유형을 등록해 주세요');go(2);return;}
+  const Y=new Date().getFullYear();
+  const codes=shifts.map(s=>s.code).sort((a,b)=>b.length-a.length);
+  const results=[];let curMon=new Date().getMonth()+1;
+  const parts=txt.replace(/[,|]/g,' ').split(/\s+/);
+  for(let i=0;i<parts.length;i++){
+    const p=parts[i].toUpperCase();
+    const m1=p.match(/^(\d{1,2})\/(\d{1,2})$/);
+    if(m1){curMon=parseInt(m1[1]);const next=parts[i+1]?.toUpperCase();const c=codes.find(x=>x===next);if(c){results.push({date:`${Y}-${String(curMon).padStart(2,'0')}-${String(m1[2]).padStart(2,'0')}`,code:c});i++;continue;}}
+    const re2=new RegExp(`^(\\d{1,2})[\\-\\.](${codes.join('|')})$`);
+    const m2=p.match(re2);
+    if(m2){results.push({date:`${Y}-${String(curMon).padStart(2,'0')}-${String(m2[1]).padStart(2,'0')}`,code:m2[2]});continue;}
+    const re3=new RegExp(`^(\\d{1,2})\\/(\\d{1,2})(${codes.join('|')})$`);
+    const m3=p.match(re3);
+    if(m3){curMon=parseInt(m3[1]);results.push({date:`${Y}-${String(curMon).padStart(2,'0')}-${String(m3[2]).padStart(2,'0')}`,code:m3[3]});continue;}
+  }
+  if(!results.length){
+    const flat=txt.toUpperCase().replace(/[,\s\/\-\.]+/g,' ').trim().split(' ');
+    let day=1;
+    flat.forEach(t=>{const c=codes.find(x=>t===x);const d=t.match(/^\d{1,2}$/);if(d)day=parseInt(d[0]);else if(c)results.push({date:`${Y}-${String(curMon).padStart(2,'0')}-${String(day++).padStart(2,'0')}`,code:c});});
+  }
+  if(!results.length){document.getElementById('ps').textContent='파싱 실패. 형식을 확인해 주세요.';return;}
+  mergeSchedule(results);
+  const d=new Date(results.slice().sort((a,b)=>a.date.localeCompare(b.date))[0].date);calY=d.getFullYear();calM=d.getMonth();
+  setAlarms();persist();document.getElementById('ps').textContent=`✓ ${results.length}일 스케줄 설정 완료! (기존 다른 날짜는 유지돼요)`;
+  setTimeout(()=>go(1),800);
+}
+
+// ── MANUAL ──
+function rManCal(){
+  document.getElementById('mlbl').textContent=`${manY}년 ${manM+1}월`;
+  const fd=new Date(manY,manM,1).getDay(),dim=new Date(manY,manM+1,0).getDate();
+  let h='';for(let i=0;i<fd;i++)h+='<div class="cc emp"></div>';
+  for(let d=1;d<=dim;d++){
+    const ds=`${manY}-${String(manM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const code=manD[ds],s=code?shifts.find(x=>x.code===code):null;
+    const st=s?`background:${s.color}22`:'';const nc=s?`color:${s.color}`:'';const cc2=s?`color:${s.color}`:'color:var(--tx3)';
+    h+=`<div class="cc${selDay===ds?' tod':''}" style="${st}" onclick="pickDay('${ds}')"><span class="cn" style="${nc}">${d}</span><span class="cc2" style="${cc2}">${code||''}</span></div>`;
+  }
+  document.getElementById('mcal').innerHTML=h;
+}
+function pickDay(ds){
+  selDay=ds;const d=new Date(ds);
+  document.getElementById('mpd').textContent=`${ds.slice(5)} (${W[d.getDay()]}) 근무 선택`;
+  document.getElementById('mpb').innerHTML=shifts.map(s=>`<button onclick="setDS('${ds}','${s.code}')" class="chip" style="${cs(s)};cursor:pointer;padding:9px 15px">${s.code} ${s.name}</button>`).join('');
+  document.getElementById('mpick').style.display='block';
+  document.getElementById('cda').value=ds;rManCal();
+}
+function setDS(ds,code){manD[ds]=code;rManCal();}
+function clearDay(){if(selDay){delete manD[selDay];rManCal();}}
+function mprev(){manM--;if(manM<0){manM=11;manY--;}rManCal();}
+function mnext(){manM++;if(manM>11){manM=0;manY++;}rManCal();}
+function applyManual(){
+  const e=Object.entries(manD);if(!e.length){alert('근무를 입력해 주세요');return;}
+  const items=e.map(([date,code])=>({date,code}));
+  mergeSchedule(items);
+  const d=new Date(items.slice().sort((a,b)=>a.date.localeCompare(b.date))[0].date);calY=d.getFullYear();calM=d.getMonth();
+  setAlarms();persist();go(1);
+}
+
+// ── HOME ──
+function rHome(){
+  if(cdTimer)clearInterval(cdTimer);
+  const now=new Date();const ts=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  document.getElementById('h-date').textContent=`${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 (${W[now.getDay()]})`;
+  const today=sched.find(s=>s.date===ts);const todEl=document.getElementById('h-today');
+  if(today){const s=shifts.find(x=>x.code===today.code);const at=gAT(today);todEl.innerHTML=s?`<div style="display:flex;align-items:center;gap:12px"><span class="chip" style="${cs(s)};font-size:15px;padding:7px 18px">${s.code}</span><div><p style="font-size:16px;font-weight:600">${s.name}</p><p style="font-size:12px;color:var(--tx2);margin-top:3px">${s.isOff?'🌙 오늘은 쉬는 날':'🕐 출근 '+s.time+' · ⏰ 알람 '+at}</p>${memos[ts]?`<span style="font-size:11px;color:var(--acc);background:var(--accg);border-radius:99px;padding:2px 8px;margin-top:6px;display:inline-block">📝 ${memos[ts]}</span>`:''}</div></div>`:'<p style="font-size:13px;color:var(--tx2)">알 수 없는 코드</p>';}
+  else todEl.innerHTML='<p style="font-size:13px;color:var(--tx2)">오늘 스케줄 없음</p>';
+  const next=sched.find(s=>{const sh=shifts.find(x=>x.code===s.code);return s.date>=ts&&sh&&!sh.isOff;});
+  document.getElementById('h-ab').style.display='none';
+  if(next){
+    const sh=shifts.find(x=>x.code===next.code);const[h,m]=sh.time.split(':').map(Number);const tgt=new Date(next.date);tgt.setHours(h,m,0,0);
+    const at=gAT(next);if(at){document.getElementById('h-ab').style.display='block';document.getElementById('h-at').textContent=at;}
+    document.getElementById('h-nd').textContent=`${next.date.slice(5)} ${sh.name} 출근까지`;
+    function tick2(){const diff=tgt-new Date();if(diff<=0){document.getElementById('h-cd').textContent='출근 시간!';clearInterval(cdTimer);return;}const hh=Math.floor(diff/3600000),mm=Math.floor((diff%3600000)/60000),ss=Math.floor((diff%60000)/1000);document.getElementById('h-cd').textContent=`${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;}
+    tick2();cdTimer=setInterval(tick2,1000);
+  } else {document.getElementById('h-cd').textContent='--:--:--';document.getElementById('h-nd').textContent='스케줄을 입력하면 표시돼요';}
+  const cnt={};const hrs={};shifts.forEach(s=>{cnt[s.code]=0;hrs[s.code]=0;});
+  sched.forEach(item=>{if(cnt[item.code]!==undefined){cnt[item.code]++;const sh=shifts.find(x=>x.code===item.code);if(sh&&!sh.isOff)hrs[item.code]=(hrs[item.code]||0)+sh.hours;}});
+  document.getElementById('h-stats').innerHTML=shifts.slice(0,4).map(s=>`<div class="sc"><div style="font-size:26px;font-weight:700;font-family:'DM Mono',monospace;color:${s.color}">${cnt[s.code]||0}</div><div style="font-size:11px;color:var(--tx2);margin-top:3px">${s.name}</div><div style="font-size:10px;color:var(--tx3);margin-top:2px">${s.isOff?'휴무':'총 '+(hrs[s.code]||0)+'h'}</div></div>`).join('');
+  const up=sched.filter(s=>s.date>ts).slice(0,4);
+  document.getElementById('h-up').innerHTML=up.length?up.map(item=>{const s=shifts.find(x=>x.code===item.code);if(!s)return'';const d=new Date(item.date);const at=gAT(item);const isOn=!offAlarms[item.date];return`<div class="cd3" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:10px"><span class="chip" style="${cs(s)}">${s.code}</span><div><p style="font-size:13px;font-weight:500">${item.date.slice(5)} (${W[d.getDay()]})</p><p style="font-size:11px;color:var(--tx2)">${s.isOff?'휴무':at+' 알람'}${memos[item.date]?' 📝':''}</p></div></div>${!s.isOff?`<button class="tg${isOn?' on':''}" onclick="toggleAlarmDate('${item.date}')"></button>`:''}</div>`;}).join(''):'<p style="font-size:13px;color:var(--tx2);padding:4px 0">다가오는 근무 없음</p>';
+}
+
+// ── CALENDAR ──
+function rCal(){
+  document.getElementById('cml').textContent=`${calY}년 ${calM+1}월`;
+  const map={};sched.forEach(s=>{map[s.date]=s.code;});
+  const now=new Date();const ts=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const fd=new Date(calY,calM,1).getDay(),dim=new Date(calY,calM+1,0).getDate();
+  let h='';for(let i=0;i<fd;i++)h+='<div class="cc emp"></div>';
+  for(let d=1;d<=dim;d++){
+    const ds=`${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const code=map[ds],s=code?shifts.find(x=>x.code===code):null;
+    const st=s?`background:${s.color}22`:'';const nc=s?`color:${s.color}`:'';const cc2=s?`color:${s.color}`:'color:var(--tx3)';
+    h+=`<div class="cc${ds===ts?' tod':''}" style="${st}" onclick="showDet('${ds}')"><span class="cn" style="${nc}">${d}</span><span class="cc2" style="${cc2}">${code||''}</span>${memos[ds]?'<div class="mdot"></div>':''}</div>`;
+  }
+  document.getElementById('cg').innerHTML=h;
+  document.getElementById('cl').innerHTML=shifts.map(s=>`<span class="chip" style="${cs(s)}">${s.code} ${s.name}</span>`).join('');
+}
+function showDet(ds){
+  const code=sched.find(s=>s.date===ds)?.code;const s=code?shifts.find(x=>x.code===code):null;const d=new Date(ds);
+  document.getElementById('cdet').style.display='block';document.getElementById('cdlbl').textContent=`${ds.slice(5)} (${W[d.getDay()]})`;
+  const at=s&&!s.isOff?gAT({date:ds,code}):'';
+  document.getElementById('cdcard').innerHTML=s?`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span class="chip" style="${cs(s)}">${s.code}</span><div><p style="font-size:14px;font-weight:500">${s.name}</p><p style="font-size:12px;color:var(--tx2)">${s.isOff?'휴무':s.time+' 출근 · 알람 '+at}</p></div></div>${memos[ds]?`<div style="font-size:12px;color:var(--acc);background:var(--accg);border-radius:9px;padding:8px;margin-bottom:8px">📝 ${memos[ds]}</div>`:''}<div style="display:flex;gap:6px"><input type="text" id="mi-${ds}" placeholder="메모 추가..." value="${memos[ds]||''}" style="flex:1;font-size:14px"><button onclick="saveMemo('${ds}')" style="padding:10px 14px;border:.5px solid var(--acc);border-radius:9px;background:transparent;color:var(--acc);cursor:pointer;font-size:12px;white-space:nowrap;flex-shrink:0">저장</button></div>`:'<p style="font-size:13px;color:var(--tx2)">이 날 스케줄 없음</p>';
+  document.getElementById('cda').value=ds;
+}
+function saveMemo(ds){const v=document.getElementById('mi-'+ds)?.value?.trim();if(v)memos[ds]=v;else delete memos[ds];persist();rCal();showDet(ds);}
+function cp(){calM--;if(calM<0){calM=11;calY--;}rCal();}
+function cn(){calM++;if(calM>11){calM=0;calY++;}rCal();}
+
+// ── CUSTOM ALARMS ──
+function addCA(){
+  const date=document.getElementById('cda').value.trim();const time=document.getElementById('cat').value;const memo=document.getElementById('cmm').value.trim();
+  if(!date){alert('날짜를 입력해 주세요');return;}
+  custAlarms[date]=time;if(memo)memos[date]=memo;setAlarms();persist();rCAList();rCal();document.getElementById('cmm').value='';
+}
+function rmCA(d){delete custAlarms[d];setAlarms();persist();rCAList();rCal();}
+function rCAList(){
+  const e=Object.entries(custAlarms);
+  document.getElementById('ical').innerHTML=e.length?e.map(([d,t])=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-top:.5px solid var(--brd)"><div><p style="font-size:12px;font-family:'DM Mono',monospace;color:var(--tx)">${d}</p><p style="font-size:11px;color:var(--acc)">⏰ ${t}${memos[d]?' · 📝 '+memos[d]:''}</p></div><button onclick="rmCA('${d}')" style="border:none;background:none;color:#f05555;cursor:pointer;font-size:20px;line-height:1;padding:6px">×</button></div>`).join(''):'';
+}
+
+// ── ALARM LIST ──
+function rAlarms(){
+  const w=document.getElementById('al');
+  if(!sched.length){w.innerHTML='<p style="font-size:13px;color:var(--tx2)">스케줄 분석 후 표시돼요</p>';return;}
+  const now=new Date();const ts=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const active=sched.filter(s=>{const sh=shifts.find(x=>x.code===s.code);return sh&&!sh.isOff;});
+  document.getElementById('als').textContent=`총 ${active.length}개`;
+  const mtg=document.getElementById('mtg');
+  const anyOn=active.some(s=>!offAlarms[s.date]);
+  mtg.classList.toggle('on',anyOn);
+  w.innerHTML=sched.map((item,i)=>{
+    const s=shifts.find(x=>x.code===item.code);if(!s)return'';const at=gAT(item);const d=new Date(item.date);const past=item.date<ts;const isc=!!custAlarms[item.date];const isOn=!offAlarms[item.date];
+    return`<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:.5px solid var(--brd);opacity:${past?.45:1}"><div style="display:flex;align-items:center;gap:12px">${at?`<div><p style="font-size:20px;font-weight:700;font-family:'DM Mono',monospace;letter-spacing:-1px;color:${past?'var(--tx3)':'var(--tx)'};line-height:1">${at}</p><p style="font-size:11px;color:var(--tx2);margin-top:3px">${item.date.slice(5)} ${W[d.getDay()]}${isc?` · <span style="color:var(--acc)">개별</span>`:''}</p></div>`:`<div><p style="font-size:14px;color:var(--tx3)">휴무</p><p style="font-size:11px;color:var(--tx3)">${item.date.slice(5)} ${W[d.getDay()]}</p></div>`}</div><div style="display:flex;align-items:center;gap:8px"><span class="chip" style="${cs(s)}">${s.code}</span>${at?`<button class="tg${isOn?' on':''}" onclick="toggleAlarmDate('${item.date}')"></button>`:''}</div></div>`;
+  }).join('');
+}
+
+// ── SERVICE WORKER ──
+function registerSW(){
+  if('serviceWorker' in navigator && (location.protocol==='https:'||location.hostname==='localhost')){
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+    navigator.serviceWorker.addEventListener('message',async(e)=>{
+      if(e.data&&e.data.type==='RESUBSCRIBE'&&e.data.subscription){
+        const backendUrl=getBackendUrl();
+        if(!backendUrl)return;
+        try{
+          await fetch(backendUrl+'/subscribe',{
+            method:'POST',
+            headers:Object.assign({'Content-Type':'application/json'},syncHeaders()),
+            body:JSON.stringify({deviceId:getDeviceId(),subscription:e.data.subscription})
+          });
+        }catch(err){}
+      }
+    });
+  }
+}
+
+// ── INIT ──
+restore();
+document.getElementById('app').setAttribute('data-theme',curTheme);
+const themeMeta=THEMES.find(t=>t.id===curTheme);
+if(themeMeta)document.getElementById('theme-color-meta').setAttribute('content',themeMeta.bg);
+renderThemeGrid();
+rShiftList();rIChips();rCAList();
+rManCal();
+rCal();
+updateApiKeyUI();
+updateNotifBadge();
+initCustomSoundInfo();
+if(sched.length)setAlarms();
+try{
+  if(localStorage.getItem('shiftAlarmV3Onboarded')==='1'){document.getElementById('s0').classList.remove('act');go(1);}
+}catch(e){}
+registerSW();
+checkPushHealth();
+</script>
+</body>
+</html>
