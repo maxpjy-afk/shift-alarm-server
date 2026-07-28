@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>근무표 알람</title>
 <meta name="theme-color" content="#0a0a10" id="theme-color-meta">
 <meta name="mobile-web-app-capable" content="yes">
@@ -15,7 +15,7 @@
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%;touch-action:manipulation}
 
 /* ── THEMES ── */
 [data-theme="dark"]{
@@ -783,15 +783,30 @@ function computeAlarmList(){
   });
   return list;
 }
+// setTimeout's delay is a 32-bit int internally — anything past ~24.8 days
+// overflows and the browser fires it almost immediately instead of waiting.
+// A shift worker entering a full month's schedule on day 1 would otherwise
+// get late-month alarms firing right away. scheduleAt() chains shorter
+// timeouts until the real due time instead of scheduling the full delay.
+const MAX_TIMEOUT=20*24*60*60*1000;
+function scheduleAt(epochMs,fn){
+  let timerId,cancelled=false;
+  function arm(){
+    const delay=epochMs-Date.now();
+    if(delay<=0){if(!cancelled)fn();return;}
+    timerId=setTimeout(()=>{if(!cancelled)arm();},Math.min(delay,MAX_TIMEOUT));
+  }
+  arm();
+  return{cancel(){cancelled=true;clearTimeout(timerId);}};
+}
 function setAlarms(){
-  aTimers.forEach(clearTimeout);aTimers=[];
+  aTimers.forEach(t=>t.cancel());aTimers=[];
   syncScheduleToServer();
   if(!('Notification' in window))return;
   if(Notification.permission!=='granted')return;
-  const now=Date.now();
   computeAlarmList().forEach(a=>{
-    const id=setTimeout(()=>{playAlarmSound();try{new Notification(a.title,{body:a.body});}catch(e){}},a.epochMs-now);
-    aTimers.push(id);
+    const t=scheduleAt(a.epochMs,()=>{playAlarmSound();try{new Notification(a.title,{body:a.body});}catch(e){}});
+    aTimers.push(t);
   });
 }
 
