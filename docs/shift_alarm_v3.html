@@ -51,6 +51,11 @@ body{height:100%;font-family:'DM Sans',sans-serif;overflow:hidden;overscroll-beh
 .cd2{background:var(--bg3);border:.5px solid var(--brd);border-radius:12px;padding:12px 14px;margin-bottom:8px;transition:background .3s}
 .cd3{background:var(--bg4);border:.5px solid var(--brd2);border-radius:9px;padding:10px 12px;margin-bottom:6px;transition:background .3s}
 .sl{font-size:10px;font-weight:600;color:var(--tx3);letter-spacing:.1em;text-transform:uppercase;margin:16px 0 8px}
+.acc-h{display:flex;align-items:center;justify-content:space-between;cursor:pointer;-webkit-user-select:none;user-select:none}
+.acc-h .acc-arrow{display:inline-block;transition:transform .2s;font-size:11px}
+.acc-h.open .acc-arrow{transform:rotate(90deg)}
+.acc-body{display:none}
+.acc-body.open{display:block}
 .chip{display:inline-flex;align-items:center;padding:4px 11px;border-radius:99px;font-size:11px;font-weight:600;font-family:'DM Mono',monospace;border:.5px solid;letter-spacing:.02em}
 input,select,textarea{width:100%;padding:12px 13px;border:.5px solid var(--brd2);border-radius:9px;font-size:16px;font-family:'DM Sans',sans-serif;background:var(--bg4);color:var(--tx);outline:none;transition:border-color .15s,background .3s,color .3s}
 input:focus,select:focus,textarea:focus{border-color:var(--acc)}
@@ -144,7 +149,7 @@ input[type=file]{display:none}
   <!-- HOME -->
   <div id="s1" class="scr">
     <div class="ph" style="display:flex;justify-content:space-between;align-items:center">
-      <div><p style="font-size:22px;font-weight:700;letter-spacing:-.3px">안녕하세요 👋</p><p style="font-size:12px;color:var(--tx2);margin-top:2px" id="h-date"></p></div>
+      <div><p style="font-size:16px;font-weight:700;letter-spacing:-.3px;line-height:1.4" id="h-greet">&nbsp;</p><p style="font-size:12px;color:var(--tx2);margin-top:2px" id="h-date"></p></div>
       <div style="width:36px;height:36px;border-radius:50%;background:var(--accg);border:.5px solid var(--acc);display:flex;align-items:center;justify-content:center">🏥</div>
     </div>
     <div class="sv" style="padding-top:10px">
@@ -174,12 +179,7 @@ input[type=file]{display:none}
     <div class="ph"><p style="font-size:22px;font-weight:700;letter-spacing:-.3px">근무 설정</p><p style="font-size:12px;color:var(--tx2);margin-top:2px">근무 코드 등록 &amp; 테마 변경</p></div>
     <div class="sv" style="padding-top:10px">
 
-      <!-- THEME SECTION -->
-      <div class="sl">🎨 테마 선택</div>
-      <div class="cd">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="theme-grid"></div>
-      </div>
-
+      <!-- PINNED: 근무 유형 추가 -->
       <div class="sl">근무 유형 추가</div>
       <div class="cd">
         <div class="g2" style="margin-bottom:8px">
@@ -214,73 +214,93 @@ input[type=file]{display:none}
       <div class="sl">등록된 근무 유형</div>
       <div id="sl-wrap"><div class="cd"><p style="font-size:13px;color:var(--tx2)">아직 없어요</p></div></div>
 
-      <div class="sl">알람음</div>
-      <div class="cd">
-        <div class="g2">
-          <div><p class="lb">소리</p><select id="sound-sel">
-            <option value="beep">기본 비프</option>
-            <option value="bell">벨 소리</option>
-            <option value="digital">디지털</option>
-            <option value="gentle">잔잔한</option>
-            <option value="chime">차임벨</option>
-            <option value="urgent">긴급</option>
-            <option value="marimba">마림바</option>
-            <option value="classic">클래식 알람</option>
-            <option value="custom">내 알람음</option>
-          </select></div>
-          <div style="display:flex;align-items:flex-end"><button class="btn bgh" onclick="testSound()" style="height:44px;margin-top:0;font-size:12px">▶ 미리듣기</button></div>
-        </div>
-        <div style="margin-top:14px;padding-top:14px;border-top:.5px solid var(--brd)">
-          <p class="lb">내 파일로 커스텀 알람음</p>
-          <p style="font-size:11px;color:var(--tx3);margin-bottom:8px;line-height:1.5">⚠️ 저작권 보호를 위해 본인이 소유한 음원 파일만 선택할 수 있어요. 인터넷에서 내려받은 음악을 임의로 사용하면 저작권법에 위배될 수 있으니, 직접 녹음했거나 정식으로 구매·보유한 파일만 넣어주세요.</p>
-          <label for="custom-sound-input">
-            <div class="uzn" id="custom-sound-zone" style="padding:16px">🎵 내 오디오 파일 선택</div>
-          </label>
-          <input type="file" id="custom-sound-input" accept="audio/*" onchange="handleCustomSound(this)">
-          <div class="stmsg" id="custom-sound-info"></div>
-          <button class="btn bgh" onclick="removeCustomSound()" style="font-size:12px">커스텀 알람음 삭제</button>
+      <!-- COLLAPSIBLE: everything else -->
+      <div class="sl acc-h" onclick="toggleAcc(this)">🎨 테마 선택<span class="acc-arrow">›</span></div>
+      <div class="acc-body">
+        <div class="cd">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="theme-grid"></div>
         </div>
       </div>
 
-      <div class="sl">🔑 Claude API 키</div>
-      <div class="cd">
-        <p style="font-size:12px;color:var(--tx2);margin-bottom:8px;line-height:1.6">사진 자동 분석 기능에 필요해요. <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--acc)">console.anthropic.com</a>에서 발급받은 키를 입력하세요. 키는 이 기기의 브라우저에만 저장되고 서버로 전송되지 않아요.</p>
-        <input type="password" id="api-key-input" placeholder="sk-ant-...">
-        <button class="btn bgh" onclick="saveApiKey()">저장</button>
-        <div class="stmsg" id="api-key-status"></div>
+      <div class="sl acc-h" onclick="toggleAcc(this)">알람음<span class="acc-arrow">›</span></div>
+      <div class="acc-body">
+        <div class="cd">
+          <div class="g2">
+            <div><p class="lb">소리</p><select id="sound-sel">
+              <option value="beep">기본 비프</option>
+              <option value="bell">벨 소리</option>
+              <option value="digital">디지털</option>
+              <option value="gentle">잔잔한</option>
+              <option value="chime">차임벨</option>
+              <option value="urgent">긴급</option>
+              <option value="marimba">마림바</option>
+              <option value="classic">클래식 알람</option>
+              <option value="custom">내 알람음</option>
+            </select></div>
+            <div style="display:flex;align-items:flex-end"><button class="btn bgh" onclick="testSound()" style="height:44px;margin-top:0;font-size:12px">▶ 미리듣기</button></div>
+          </div>
+          <div style="margin-top:14px;padding-top:14px;border-top:.5px solid var(--brd)">
+            <p class="lb">내 파일로 커스텀 알람음</p>
+            <p style="font-size:11px;color:var(--tx3);margin-bottom:8px;line-height:1.5">⚠️ 저작권 보호를 위해 본인이 소유한 음원 파일만 선택할 수 있어요. 인터넷에서 내려받은 음악을 임의로 사용하면 저작권법에 위배될 수 있으니, 직접 녹음했거나 정식으로 구매·보유한 파일만 넣어주세요.</p>
+            <label for="custom-sound-input">
+              <div class="uzn" id="custom-sound-zone" style="padding:16px">🎵 내 오디오 파일 선택</div>
+            </label>
+            <input type="file" id="custom-sound-input" accept="audio/*" onchange="handleCustomSound(this)">
+            <div class="stmsg" id="custom-sound-info"></div>
+            <button class="btn bgh" onclick="removeCustomSound()" style="font-size:12px">커스텀 알람음 삭제</button>
+          </div>
+        </div>
       </div>
 
-      <div class="sl">📲 홈 화면에 추가하기</div>
-      <div class="warn">
-        <b>iOS(사파리):</b> 하단 공유 버튼 → "홈 화면에 추가"<br>
-        <b>Android(크롬):</b> 우측 상단 메뉴(⋮) → "홈 화면에 추가" 또는 앱 설치 팝업<br>
-        홈 화면에 추가하면 앱처럼 전체 화면으로 실행되고, 알림도 더 안정적으로 동작해요.
+      <div class="sl acc-h" onclick="toggleAcc(this)">🔑 Claude API 키<span class="acc-arrow">›</span></div>
+      <div class="acc-body">
+        <div class="cd">
+          <p style="font-size:12px;color:var(--tx2);margin-bottom:8px;line-height:1.6">사진 자동 분석 기능에 필요해요. <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:var(--acc)">console.anthropic.com</a>에서 발급받은 키를 입력하세요. 키는 이 기기의 브라우저에만 저장되고 서버로 전송되지 않아요.</p>
+          <input type="password" id="api-key-input" placeholder="sk-ant-...">
+          <button class="btn bgh" onclick="saveApiKey()">저장</button>
+          <div class="stmsg" id="api-key-status"></div>
+        </div>
       </div>
 
-      <div class="sl">🔔 백업 알림 서버 (선택)</div>
-      <div class="cd">
-        <p style="font-size:12px;color:var(--tx2);margin-bottom:8px;line-height:1.6">앱을 완전히 꺼둬도 알람이 오도록 백업 서버를 연결할 수 있어요. 아직 서버가 없다면 비워두셔도 돼요 — 지금처럼 앱을 최근에 열어둔 상태의 알람은 그대로 작동해요.</p>
-        <p class="lb">서버 주소</p>
-        <input type="text" id="backend-url-input" placeholder="https://your-app.onrender.com">
-        <p class="lb" style="margin-top:8px">동기화 비밀키</p>
-        <input type="password" id="sync-secret-input" placeholder="서버에 설정한 SYNC_SECRET과 동일하게">
-        <button class="btn bgh" onclick="saveBackendConfig()">저장 및 연결</button>
-        <div class="stmsg" id="backend-status"></div>
-        <div style="margin-top:6px"><span class="badge no" id="push-badge">미설정</span></div>
+      <div class="sl acc-h" onclick="toggleAcc(this)">📲 홈 화면에 추가하기<span class="acc-arrow">›</span></div>
+      <div class="acc-body">
+        <div class="warn">
+          <b>iOS(사파리):</b> 하단 공유 버튼 → "홈 화면에 추가"<br>
+          <b>Android(크롬):</b> 우측 상단 메뉴(⋮) → "홈 화면에 추가" 또는 앱 설치 팝업<br>
+          홈 화면에 추가하면 앱처럼 전체 화면으로 실행되고, 알림도 더 안정적으로 동작해요.
+        </div>
       </div>
 
-      <div class="sl">🔋 배터리 최적화 해제 (Android)</div>
-      <div class="warn">
-        백업 알림을 켰어도 제조사 배터리 절전 기능이 브라우저 앱을 재워버리면 알림이 늦게 오거나 씹힐 수 있어요. 아래 설정으로 예외 처리해 주세요.<br><br>
-        <b>삼성(One UI):</b> 설정 → 배터리 및 디바이스 케어 → 배터리 → 백그라운드 사용량 제한 → Chrome(또는 사용 브라우저) 찾아서 "제한 없음"으로 변경<br><br>
-        <b>샤오미(MIUI):</b> 설정 → 앱 → 앱 관리 → Chrome → 배터리 절약 → "제한 없음"<br><br>
-        <b>일반 Android:</b> 설정 → 앱 → Chrome → 배터리 → "최적화 안 함"
+      <div class="sl acc-h" onclick="toggleAcc(this)">🔔 백업 알림 서버 (선택)<span class="acc-arrow">›</span></div>
+      <div class="acc-body">
+        <div class="cd">
+          <p style="font-size:12px;color:var(--tx2);margin-bottom:8px;line-height:1.6">앱을 완전히 꺼둬도 알람이 오도록 백업 서버를 연결할 수 있어요. 아직 서버가 없다면 비워두셔도 돼요 — 지금처럼 앱을 최근에 열어둔 상태의 알람은 그대로 작동해요.</p>
+          <p class="lb">서버 주소</p>
+          <input type="text" id="backend-url-input" placeholder="https://your-app.onrender.com">
+          <p class="lb" style="margin-top:8px">동기화 비밀키</p>
+          <input type="password" id="sync-secret-input" placeholder="서버에 설정한 SYNC_SECRET과 동일하게">
+          <button class="btn bgh" onclick="saveBackendConfig()">저장 및 연결</button>
+          <div class="stmsg" id="backend-status"></div>
+          <div style="margin-top:6px"><span class="badge no" id="push-badge">미설정</span></div>
+        </div>
       </div>
 
-      <div class="sl">⚠️ 데이터 초기화</div>
-      <div class="cd">
-        <p style="font-size:12px;color:var(--tx2);margin-bottom:10px;line-height:1.6">사진·텍스트·직접입력 중 어떤 방법으로 넣었든 새 스케줄은 기존 날짜와 자동으로 합쳐져요(같은 날짜만 덮어써짐). 완전히 새로 시작하고 싶을 때만 아래를 눌러주세요.</p>
-        <button class="btn bgh" onclick="resetAllSchedule()" style="border-color:#f05555;color:#f05555">스케줄 전체 초기화</button>
+      <div class="sl acc-h" onclick="toggleAcc(this)">🔋 배터리 최적화 해제 (Android)<span class="acc-arrow">›</span></div>
+      <div class="acc-body">
+        <div class="warn">
+          백업 알림을 켰어도 제조사 배터리 절전 기능이 브라우저 앱을 재워버리면 알림이 늦게 오거나 씹힐 수 있어요. 아래 설정으로 예외 처리해 주세요.<br><br>
+          <b>삼성(One UI):</b> 설정 → 배터리 및 디바이스 케어 → 배터리 → 백그라운드 사용량 제한 → Chrome(또는 사용 브라우저) 찾아서 "제한 없음"으로 변경<br><br>
+          <b>샤오미(MIUI):</b> 설정 → 앱 → 앱 관리 → Chrome → 배터리 절약 → "제한 없음"<br><br>
+          <b>일반 Android:</b> 설정 → 앱 → Chrome → 배터리 → "최적화 안 함"
+        </div>
+      </div>
+
+      <div class="sl acc-h" onclick="toggleAcc(this)">⚠️ 데이터 초기화<span class="acc-arrow">›</span></div>
+      <div class="acc-body">
+        <div class="cd">
+          <p style="font-size:12px;color:var(--tx2);margin-bottom:10px;line-height:1.6">사진·텍스트·직접입력 중 어떤 방법으로 넣었든 새 스케줄은 기존 날짜와 자동으로 합쳐져요(같은 날짜만 덮어써짐). 완전히 새로 시작하고 싶을 때만 아래를 눌러주세요.</p>
+          <button class="btn bgh" onclick="resetAllSchedule()" style="border-color:#f05555;color:#f05555">스케줄 전체 초기화</button>
+        </div>
       </div>
     </div>
   </div>
@@ -476,6 +496,42 @@ const THEMES = [
   {id:'light',  name:'라이트', bg:'#f5f5fa', acc:'#7c6ef7', preview:['#f5f5fa','#7c6ef7','#ffffff']},
 ];
 
+// ── DAILY QUOTE ── same quote all day, changes at local midnight.
+const QUOTES=[
+  '오늘도 버텨낸 당신, 이미 충분히 잘하고 있어요',
+  '밤을 지키는 당신 덕분에 누군가는 편히 잠들어요',
+  '조금 느려도 괜찮아요, 멈추지만 않으면 돼요',
+  '고단한 하루도 결국 지나가요',
+  '쉬는 날엔 아무것도 안 해도 괜찮아요',
+  '오늘 하루도 애쓴 당신을 응원해요',
+  '지친 몸도 마음만은 잘 챙겨주세요',
+  '당신의 근무가 누군가에겐 안심이 돼요',
+  '작은 휴식도 소중히 여겨주세요',
+  '오늘 하루, 딱 한 걸음만 더 가봐요',
+  '아무리 바빠도 물 한 잔 챙겨 마셔요',
+  '수고했다는 말, 스스로에게도 해주세요',
+  '완벽하지 않아도 오늘의 최선이면 충분해요',
+  '피곤한 날일수록 나 자신에게 다정하게',
+  '다음 휴무를 기다리며 오늘도 화이팅이에요',
+  '누군가의 하루를 지켜주는 당신이 자랑스러워요',
+  '잠깐의 틈에도 숨 한번 크게 쉬어봐요',
+  '오늘의 고생이 헛되지 않을 거예요',
+  '무너지지 않고 여기까지 온 것만으로도 대단해요',
+  '당신의 노력은 반드시 어딘가에 남아요',
+  '조급해하지 않아도 괜찮아요, 잘 가고 있어요',
+  '몸이 힘들 땐 마음이라도 가볍게',
+  '오늘도 무사히, 그거면 충분해요',
+  '지금 이 순간도 잘 버티고 있어요',
+  '따뜻한 밥 한 끼, 오늘은 꼭 챙겨요',
+  '누구보다 성실한 당신, 알아주는 사람이 있어요',
+  '힘든 날엔 잠깐 멈춰도 괜찮아요',
+  '당신의 존재만으로도 이 팀은 든든해요',
+  '오늘 하루도 참 애썼어요',
+  '내일은 오늘보다 조금 더 가벼울 거예요',
+];
+function dayOfYear(d){return Math.floor((d-new Date(d.getFullYear(),0,0))/86400000);}
+function todaysQuote(){return QUOTES[(dayOfYear(new Date())+new Date().getFullYear())%QUOTES.length];}
+
 function renderThemeGrid(){
   const g=document.getElementById('theme-grid');
   g.innerHTML=THEMES.map(t=>`
@@ -636,6 +692,7 @@ function go(n){
 
 // ── COLORS ──
 function pickColor(c,el){selColor=c;document.querySelectorAll('.sw').forEach(s=>s.classList.remove('sel'));el.classList.add('sel');}
+function toggleAcc(h){h.classList.toggle('open');h.nextElementSibling.classList.toggle('open');}
 function cs(s){return`background:${s.color}22;color:${s.color};border-color:${s.color}55`;}
 
 // ── API KEY ──
@@ -1082,6 +1139,7 @@ function applyManual(){
 // ── HOME ──
 function rHome(){
   if(cdTimer)clearInterval(cdTimer);
+  document.getElementById('h-greet').textContent=todaysQuote();
   const now=new Date();const ts=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   document.getElementById('h-date').textContent=`${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 (${W[now.getDay()]})`;
   const today=sched.find(s=>s.date===ts);const todEl=document.getElementById('h-today');
