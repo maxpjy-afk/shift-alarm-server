@@ -34,39 +34,6 @@
   --card-shadow:0 2px 12px rgba(100,100,160,.1);
   --nav-bg:rgba(245,245,250,.94);
 }
-[data-theme="mint"]{
-  --bg:#0a110e;--bg2:#111a15;--bg3:#162118;--bg4:#1e2d22;--bg5:#253828;
-  --brd:#1e3025;--brd2:#274035;
-  --tx:#e8f5ee;--tx2:#7aaa90;--tx3:#3a5a48;
-  --acc:#2dba6e;--acc2:#1e9055;--accg:rgba(45,186,110,.2);
-  --card-shadow:0 2px 12px rgba(0,0,0,.4);
-  --nav-bg:rgba(10,17,14,.94);
-}
-[data-theme="sunset"]{
-  --bg:#110a08;--bg2:#1a1008;--bg3:#221508;--bg4:#2e1c0a;--bg5:#3a240e;
-  --brd:#3a2010;--brd2:#4a2c14;
-  --tx:#f8ede0;--tx2:#b08060;--tx3:#5a3820;
-  --acc:#f07030;--acc2:#c05020;--accg:rgba(240,112,48,.2);
-  --card-shadow:0 2px 12px rgba(0,0,0,.4);
-  --nav-bg:rgba(17,10,8,.94);
-}
-[data-theme="rose"]{
-  --bg:#110810;--bg2:#1a0e18;--bg3:#221420;--bg4:#2e1a2c;--bg5:#3a2038;
-  --brd:#3a1838;--brd2:#4a2248;
-  --tx:#f8e8f6;--tx2:#b070a8;--tx3:#5a2858;
-  --acc:#d060c0;--acc2:#a04090;--accg:rgba(208,96,192,.2);
-  --card-shadow:0 2px 12px rgba(0,0,0,.4);
-  --nav-bg:rgba(17,8,16,.94);
-}
-[data-theme="ocean"]{
-  --bg:#08100e;--bg2:#0e181a;--bg3:#142028;--bg4:#1a2a34;--bg5:#203440;
-  --brd:#183040;--brd2:#204050;
-  --tx:#e0f0f8;--tx2:#6090b0;--tx3:#284860;
-  --acc:#2090d0;--acc2:#1068a0;--accg:rgba(32,144,208,.2);
-  --card-shadow:0 2px 12px rgba(0,0,0,.4);
-  --nav-bg:rgba(8,16,14,.94);
-}
-
 html{height:100%}
 body{height:100%;font-family:'DM Sans',sans-serif;overflow:hidden;overscroll-behavior:none;background:#000}
 #app{position:fixed;inset:0;background:var(--bg);color:var(--tx);display:flex;flex-direction:column;overflow:hidden;transition:background .3s,color .3s}
@@ -156,14 +123,10 @@ input[type=file]{display:none}
       <div id="ob2" class="ob-p" style="opacity:0;display:none">
         <div style="font-size:60px;margin-bottom:18px">🎨</div>
         <p style="font-size:22px;font-weight:700;margin-bottom:12px">내 취향대로 꾸미기</p>
-        <p style="font-size:14px;color:var(--tx2);line-height:1.7">다크, 라이트, 민트, 선셋 등<br>6가지 테마로 앱을 꾸밀 수 있어요</p>
+        <p style="font-size:14px;color:var(--tx2);line-height:1.7">다크, 라이트<br>취향대로 골라 쓸 수 있어요</p>
         <div style="display:flex;gap:8px;justify-content:center;margin-top:18px">
           <div style="width:36px;height:36px;border-radius:50%;background:#0a0a10;border:2px solid var(--brd2)"></div>
           <div style="width:36px;height:36px;border-radius:50%;background:#f5f5fa;border:2px solid var(--brd2)"></div>
-          <div style="width:36px;height:36px;border-radius:50%;background:#0a110e;border:2px solid var(--brd2)"></div>
-          <div style="width:36px;height:36px;border-radius:50%;background:#110a08;border:2px solid var(--brd2)"></div>
-          <div style="width:36px;height:36px;border-radius:50%;background:#110810;border:2px solid var(--brd2)"></div>
-          <div style="width:36px;height:36px;border-radius:50%;background:#08100e;border:2px solid var(--brd2)"></div>
         </div>
       </div>
     </div>
@@ -214,7 +177,7 @@ input[type=file]{display:none}
       <!-- THEME SECTION -->
       <div class="sl">🎨 테마 선택</div>
       <div class="cd">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px" id="theme-grid"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="theme-grid"></div>
       </div>
 
       <div class="sl">근무 유형 추가</div>
@@ -458,7 +421,7 @@ input[type=file]{display:none}
 
   <div class="bnav">
     <div class="ni" onclick="go(1)" id="n1"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span class="nl">홈</span></div>
-    <div class="ni" onclick="go(2)" id="n2"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M12 2v2M12 20v2M2 12h2M20 12h2"/></svg><span class="nl">설정</span></div>
+    <div class="ni" onclick="go(5)" id="n5"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="nl">알람</span></div>
     <div class="ni" onclick="go(3)" id="n3">
       <div style="width:44px;height:44px;border-radius:50%;background:var(--acc);display:flex;align-items:center;justify-content:center;margin-top:-16px;box-shadow:0 4px 20px var(--accg)">
         <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" style="width:20px;height:20px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -466,7 +429,7 @@ input[type=file]{display:none}
       <span class="nl">입력</span>
     </div>
     <div class="ni" onclick="go(4)" id="n4"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span class="nl">캘린더</span></div>
-    <div class="ni" onclick="go(5)" id="n5"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="nl">알람</span></div>
+    <div class="ni" onclick="go(2)" id="n2"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M12 2v2M12 20v2M2 12h2M20 12h2"/></svg><span class="nl">설정</span></div>
   </div>
 </div>
 
@@ -500,7 +463,7 @@ function restore(){
     if(raw){
       const d=JSON.parse(raw);
       shifts=d.shifts||[];sched=d.sched||[];custAlarms=d.custAlarms||{};memos=d.memos||{};offAlarms=d.offAlarms||{};
-      curTheme=d.curTheme||'dark';nameHistory=d.nameHistory||[];
+      curTheme=d.curTheme||'dark';if(!THEMES.some(t=>t.id===curTheme))curTheme='dark';nameHistory=d.nameHistory||[];
       if(d.soundSel)document.getElementById('sound-sel').value=d.soundSel;
     }
     apiKey=localStorage.getItem(API_KEY_STORE)||'';
@@ -511,10 +474,6 @@ function restore(){
 const THEMES = [
   {id:'dark',   name:'다크',   bg:'#0a0a10', acc:'#7c6ef7', preview:['#0a0a10','#7c6ef7','#12121a']},
   {id:'light',  name:'라이트', bg:'#f5f5fa', acc:'#7c6ef7', preview:['#f5f5fa','#7c6ef7','#ffffff']},
-  {id:'mint',   name:'민트',   bg:'#0a110e', acc:'#2dba6e', preview:['#0a110e','#2dba6e','#111a15']},
-  {id:'sunset', name:'선셋',   bg:'#110a08', acc:'#f07030', preview:['#110a08','#f07030','#1a1008']},
-  {id:'rose',   name:'로즈',   bg:'#110810', acc:'#d060c0', preview:['#110810','#d060c0','#1a0e18']},
-  {id:'ocean',  name:'오션',   bg:'#08100e', acc:'#2090d0', preview:['#08100e','#2090d0','#0e181a']},
 ];
 
 function renderThemeGrid(){
