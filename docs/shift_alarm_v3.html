@@ -400,6 +400,7 @@ input[type=file]{display:none}
         <div class="ch"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
         <div class="cg" id="cg"></div>
       </div>
+      <button class="btn bgh" onclick="exportICS()" style="margin-bottom:12px;margin-top:0">📆 캘린더 앱으로 내보내기 (.ics)</button>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px" id="cl"></div>
       <div id="cdet" style="display:none">
         <div class="sl" id="cdlbl"></div>
@@ -1227,6 +1228,36 @@ function showDet(ds){
 function saveMemo(ds){const v=document.getElementById('mi-'+ds)?.value?.trim();if(v)memos[ds]=v;else delete memos[ds];persist();rCal();showDet(ds);}
 function cp(){calM--;if(calM<0){calM=11;calY--;}rCal();}
 function cn(){calM++;if(calM>11){calM=0;calY++;}rCal();}
+function icsEscape(s){return String(s).replace(/[\\;,]/g,m=>'\\'+m).replace(/\n/g,'\\n');}
+function icsLocalStamp(d){const p=n=>String(n).padStart(2,'0');return`${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}T${p(d.getHours())}${p(d.getMinutes())}00`;}
+function icsUtcStamp(d){return d.toISOString().replace(/[-:]/g,'').split('.')[0]+'Z';}
+// Standard iCalendar export — works with Google/Apple/Outlook calendars
+// without needing any OAuth login or API keys, unlike a real Calendar API
+// integration would.
+function exportICS(){
+  const withShift=sched.map(item=>({item,s:shifts.find(x=>x.code===item.code)})).filter(x=>x.s&&!x.s.isOff);
+  if(!withShift.length){alert('내보낼 근무 스케줄이 없어요');return;}
+  const now=icsUtcStamp(new Date());
+  let ics='BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//ShiftAlarm//KO\r\nCALSCALE:GREGORIAN\r\n';
+  withShift.forEach(({item,s})=>{
+    const[h,m]=s.time.split(':').map(Number);
+    const start=new Date(item.date);start.setHours(h,m,0,0);
+    const end=new Date(start.getTime()+s.hours*3600000);
+    ics+=`BEGIN:VEVENT\r\nUID:${item.date}-${s.code}@shiftalarm\r\nDTSTAMP:${now}\r\nDTSTART:${icsLocalStamp(start)}\r\nDTEND:${icsLocalStamp(end)}\r\nSUMMARY:${icsEscape(s.name)}${memos[item.date]?'\\n'+icsEscape(memos[item.date]):''}\r\n`;
+    if(s.before>0)ics+=`BEGIN:VALARM\r\nACTION:DISPLAY\r\nDESCRIPTION:근무 알람\r\nTRIGGER:-PT${s.before}M\r\nEND:VALARM\r\n`;
+    ics+='END:VEVENT\r\n';
+  });
+  ics+='END:VCALENDAR\r\n';
+  const blob=new Blob([ics],{type:'text/calendar;charset=utf-8'});
+  const file=new File([blob],'근무표.ics',{type:'text/calendar'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    navigator.share({files:[file],title:'근무표'}).catch(()=>{});
+  }else{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='근무표.ics';document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),2000);
+  }
+}
 function shareSchedule(){
   const monthSched=sched.filter(s=>{const d=new Date(s.date);return d.getFullYear()===calY&&d.getMonth()===calM;}).sort((a,b)=>a.date.localeCompare(b.date));
   if(!monthSched.length){alert('이번 달에 공유할 스케줄이 없어요');return;}
