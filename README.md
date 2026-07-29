@@ -39,7 +39,6 @@ Render가 GitHub 저장소를 보고 자동 배포하는 방식이라 필요해�
    | `VAPID_SUBJECT` | `mailto:본인이메일@gmail.com` |
    | `UPSTASH_REDIS_REST_URL` | 1단계에서 복사한 값 |
    | `UPSTASH_REDIS_REST_TOKEN` | 1단계에서 복사한 값 |
-   | `SYNC_SECRET` | 아무 랜덤 문자열 (예: 비밀번호 생성기로 만든 값) — 앱 설정 화면에도 동일하게 입력할 값 |
 
 5. "Create Web Service" 클릭 → 배포 완료되면 `https://xxxx.onrender.com` 같은 주소가 생겨요. 이 주소를 복사해두세요.
 
@@ -60,11 +59,11 @@ cron-job.org 핑이 매 분 깨워주기 때문에 실사용에는 문제없지�
 
 ## 5단계 — 앱에 연결하기
 
-1. `shift_alarm_v3.html`을 열고 설정 탭 → "🔔 백업 알림 서버" 카드로 이동
-2. 서버 주소: 3단계에서 받은 `https://xxxx.onrender.com` 입력
-3. 동기화 비밀키: 3단계에서 만든 `SYNC_SECRET` 값과 똑같이 입력
-4. "저장 및 연결" 클릭
-5. "✓ 백업 알림 연결됨" 배지가 뜨면 성공이에요
+로그인이나 비밀키 없이, 기기마다 자동으로 생기는 랜덤 ID로 서버와 연결돼요.
+
+- 이 저장소를 그대로 배포했다면(주소가 `shift-alarm-server.onrender.com`) 앱에서 알림 권한만 허용하면 자동으로 연결돼요. 따로 할 게 없어요.
+- 본인만의 별도 서버를 새로 배포했다면, `shift_alarm_v3.html`의 `DEFAULT_BACKEND_URL` 상수를 본인 주소로 바꾸거나, 앱 설정 탭 → "🔔 백업 알림 서버" 카드 하단의 "직접 운영하는 서버" 입력란에 3단계에서 받은 주소를 넣고 저장하세요.
+- "✓ 백업 알림 연결됨" 배지가 뜨면 성공이에요.
 
 ## 확인하는 법
 

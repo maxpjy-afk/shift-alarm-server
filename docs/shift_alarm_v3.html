@@ -271,17 +271,15 @@ input[type=file]{display:none}
         </div>
       </div>
 
-      <div class="sl acc-h" onclick="toggleAcc(this)">🔔 백업 알림 서버 (선택)<span class="acc-arrow">›</span></div>
+      <div class="sl acc-h" onclick="toggleAcc(this)">🔔 백업 알림 서버<span class="acc-arrow">›</span></div>
       <div class="acc-body">
         <div class="cd">
-          <p style="font-size:12px;color:var(--tx2);margin-bottom:8px;line-height:1.6">앱을 완전히 꺼둬도 알람이 오도록 백업 서버를 연결할 수 있어요. 아직 서버가 없다면 비워두셔도 돼요 — 지금처럼 앱을 최근에 열어둔 상태의 알람은 그대로 작동해요.</p>
-          <p class="lb">서버 주소</p>
-          <input type="text" id="backend-url-input" placeholder="https://your-app.onrender.com">
-          <p class="lb" style="margin-top:8px">동기화 비밀키</p>
-          <input type="password" id="sync-secret-input" placeholder="서버에 설정한 SYNC_SECRET과 동일하게">
-          <button class="btn bgh" onclick="saveBackendConfig()">저장 및 연결</button>
-          <div class="stmsg" id="backend-status"></div>
+          <p style="font-size:12px;color:var(--tx2);margin-bottom:8px;line-height:1.6">앱을 완전히 꺼둬도 알람이 오도록, 알림 권한만 허용하면 자동으로 백업 서버에 연결돼요. 따로 입력할 건 없어요.</p>
           <div style="margin-top:6px"><span class="badge no" id="push-badge">미설정</span></div>
+          <div class="stmsg" id="backend-status"></div>
+          <p style="font-size:11px;color:var(--tx3);margin-top:14px;padding-top:12px;border-top:.5px solid var(--brd)">직접 운영하는 서버가 따로 있는 경우에만 아래에 주소를 입력하세요. 평소엔 비워두시면 돼요.</p>
+          <input type="text" id="backend-url-input" placeholder="https://your-app.onrender.com" style="margin-top:6px">
+          <button class="btn bgh" onclick="saveBackendConfig()">저장 및 연결</button>
         </div>
       </div>
 
@@ -827,16 +825,22 @@ function setAlarms(){
 }
 
 // ── BACKUP PUSH (works even if the app is fully closed) ──
+// No login, no shared secret: every install gets its own random deviceId
+// (128-bit UUID, practically unguessable) which doubles as its bearer
+// credential with the backend. That's what lets this connect automatically
+// with zero setup, safely, even with many unrelated installs sharing one
+// backend — nobody can read another device's data (no read endpoint exists)
+// and nobody can act on a device without already knowing its deviceId.
 const VAPID_PUBLIC_KEY='BNt1J__AWKou5Jfw8bvc5byU9rqjRh8FYKsmoWCjL5l8i4ZO_b0IMw3nTINI433jMq3p1YgP38sf0hikdSETeX4';
+const DEFAULT_BACKEND_URL='https://shift-alarm-server.onrender.com';
 function getDeviceId(){
   let id=localStorage.getItem('shiftAlarmDeviceId');
   if(!id){id=(crypto.randomUUID?crypto.randomUUID():'dev-'+Date.now()+'-'+Math.random().toString(36).slice(2));localStorage.setItem('shiftAlarmDeviceId',id);}
   return id;
 }
-function getBackendUrl(){return(localStorage.getItem('shiftAlarmBackendUrl')||'').trim().replace(/\/$/,'');}
-function syncHeaders(){
-  const secret=(localStorage.getItem('shiftAlarmSyncSecret')||'').trim();
-  return secret?{'x-sync-secret':secret}:{};
+function getBackendUrl(){
+  const override=(localStorage.getItem('shiftAlarmBackendUrl')||'').trim().replace(/\/$/,'');
+  return override||DEFAULT_BACKEND_URL;
 }
 function urlBase64ToUint8Array(base64String){
   const padding='='.repeat((4-base64String.length%4)%4);
@@ -855,18 +859,16 @@ function updatePushBadge(state){
 }
 async function syncScheduleToServer(){
   const backendUrl=getBackendUrl();
-  if(!backendUrl)return;
   try{
     await fetch(backendUrl+'/sync',{
       method:'POST',
-      headers:Object.assign({'Content-Type':'application/json'},syncHeaders()),
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({deviceId:getDeviceId(),alarms:computeAlarmList()})
     });
   }catch(e){/* offline or server down — local timer still covers this while the app is open */}
 }
 async function subscribeToPush(){
   const backendUrl=getBackendUrl();
-  if(!backendUrl)return false;
   if(!('serviceWorker' in navigator)||!('PushManager' in window)){updatePushBadge(false);return false;}
   if(Notification.permission!=='granted')return false;
   try{
@@ -877,7 +879,7 @@ async function subscribeToPush(){
     }
     await fetch(backendUrl+'/subscribe',{
       method:'POST',
-      headers:Object.assign({'Content-Type':'application/json'},syncHeaders()),
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({deviceId:getDeviceId(),subscription:sub})
     });
     updatePushBadge(true);
@@ -890,8 +892,7 @@ async function subscribeToPush(){
 async function checkPushHealth(){
   const backendUrl=getBackendUrl();
   const urlInput=document.getElementById('backend-url-input');
-  if(urlInput&&backendUrl)urlInput.placeholder=backendUrl;
-  if(!backendUrl){updatePushBadge(null);return;}
+  if(urlInput)urlInput.placeholder=backendUrl;
   if(!('Notification' in window)||Notification.permission!=='granted'){updatePushBadge(false);return;}
   if(!('serviceWorker' in navigator)){updatePushBadge(false);return;}
   try{
@@ -903,13 +904,10 @@ async function checkPushHealth(){
 }
 async function saveBackendConfig(){
   const url=document.getElementById('backend-url-input').value.trim().replace(/\/$/,'');
-  const secret=document.getElementById('sync-secret-input').value.trim();
-  localStorage.setItem('shiftAlarmBackendUrl',url);
-  if(secret)localStorage.setItem('shiftAlarmSyncSecret',secret);
+  if(url)localStorage.setItem('shiftAlarmBackendUrl',url);
+  else localStorage.removeItem('shiftAlarmBackendUrl');
   document.getElementById('backend-url-input').value='';
-  document.getElementById('sync-secret-input').value='';
   const st=document.getElementById('backend-status');
-  if(!url){st.textContent='백업 서버 연결을 해제했어요';updatePushBadge(null);return;}
   st.textContent='연결 확인 중...';
   if(!('Notification' in window)||Notification.permission!=='granted'){
     st.textContent='먼저 알람 탭에서 알림 권한을 허용해 주세요';
@@ -917,7 +915,8 @@ async function saveBackendConfig(){
     return;
   }
   const ok=await subscribeToPush();
-  st.textContent=ok?'✓ 연결 완료! 알람이 이중으로 보호돼요':'연결 실패. 주소와 비밀키를 확인해 주세요';
+  st.textContent=ok?'✓ 연결 완료! 알람이 이중으로 보호돼요':'연결 실패. 서버 주소를 확인해 주세요';
+  checkPushHealth();
   if(ok)syncScheduleToServer();
 }
 
@@ -1222,12 +1221,10 @@ function registerSW(){
     navigator.serviceWorker.register('sw.js').catch(()=>{});
     navigator.serviceWorker.addEventListener('message',async(e)=>{
       if(e.data&&e.data.type==='RESUBSCRIBE'&&e.data.subscription){
-        const backendUrl=getBackendUrl();
-        if(!backendUrl)return;
         try{
-          await fetch(backendUrl+'/subscribe',{
+          await fetch(getBackendUrl()+'/subscribe',{
             method:'POST',
-            headers:Object.assign({'Content-Type':'application/json'},syncHeaders()),
+            headers:{'Content-Type':'application/json'},
             body:JSON.stringify({deviceId:getDeviceId(),subscription:e.data.subscription})
           });
         }catch(err){}

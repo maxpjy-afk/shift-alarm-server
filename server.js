@@ -10,10 +10,6 @@ app.use(express.json({ limit: '1mb' }));
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:example@example.com';
-// Shared secret the client must send back so randos who guess a deviceId
-// can't overwrite someone else's subscription. Not real auth, just a
-// speed bump appropriate for a personal single/few-user app.
-const SYNC_SECRET = process.env.SYNC_SECRET || '';
 
 if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
   console.error('Missing VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY env vars — push will fail.');
@@ -21,14 +17,10 @@ if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
   webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 }
 
-function checkSecret(req, res) {
-  if (!SYNC_SECRET) return true;
-  if (req.get('x-sync-secret') !== SYNC_SECRET) {
-    res.status(401).json({ error: 'bad secret' });
-    return false;
-  }
-  return true;
-}
+// No shared secret: each client generates its own random deviceId (128-bit
+// UUID) client-side, which doubles as its bearer credential. Unguessable in
+// practice, and there's no read endpoint, so this is enough for many
+// unrelated installs to safely share one backend without any login system.
 
 app.get('/', (req, res) => {
   res.json({ ok: true, service: 'shift-alarm-push-server' });
@@ -37,7 +29,6 @@ app.get('/', (req, res) => {
 // Client calls this once it has a PushSubscription, and again whenever the
 // subscription changes (pushsubscriptionchange in the service worker).
 app.post('/subscribe', async (req, res) => {
-  if (!checkSecret(req, res)) return;
   const { deviceId, subscription } = req.body || {};
   if (!deviceId || !subscription) return res.status(400).json({ error: 'deviceId and subscription required' });
   try {
@@ -55,7 +46,6 @@ app.post('/subscribe', async (req, res) => {
 // Full replace of the alarm list each time — simplest to reason about and
 // keeps client and server from ever silently drifting out of sync.
 app.post('/sync', async (req, res) => {
-  if (!checkSecret(req, res)) return;
   const { deviceId, alarms } = req.body || {};
   if (!deviceId || !Array.isArray(alarms)) return res.status(400).json({ error: 'deviceId and alarms[] required' });
   try {
@@ -69,7 +59,6 @@ app.post('/sync', async (req, res) => {
 });
 
 app.post('/unsubscribe', async (req, res) => {
-  if (!checkSecret(req, res)) return;
   const { deviceId } = req.body || {};
   if (!deviceId) return res.status(400).json({ error: 'deviceId required' });
   try {
