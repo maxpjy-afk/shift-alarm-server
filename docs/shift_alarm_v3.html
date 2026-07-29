@@ -113,7 +113,7 @@ input[type=file]{display:none}
   <div id="s0" class="scr act" style="padding:0">
     <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:calc(36px + env(safe-area-inset-top)) 28px 20px;text-align:center">
       <div id="ob0" class="ob-p">
-        <div style="font-size:70px;margin-bottom:22px">🏥</div>
+        <div style="font-size:70px;margin-bottom:22px">🌗</div>
         <p style="font-size:28px;font-weight:700;letter-spacing:-.5px;margin-bottom:12px">근무표 알람</p>
         <p style="font-size:15px;color:var(--tx2);line-height:1.7">교대 근무자를 위한<br>스마트 스케줄 알람 앱</p>
       </div>
@@ -150,7 +150,7 @@ input[type=file]{display:none}
   <div id="s1" class="scr">
     <div class="ph" style="display:flex;justify-content:space-between;align-items:center">
       <div><p style="font-size:16px;font-weight:700;letter-spacing:-.3px;line-height:1.4" id="h-greet">&nbsp;</p><p style="font-size:12px;color:var(--tx2);margin-top:2px" id="h-date"></p></div>
-      <div style="width:36px;height:36px;border-radius:50%;background:var(--accg);border:.5px solid var(--acc);display:flex;align-items:center;justify-content:center">🏥</div>
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--accg);border:.5px solid var(--acc);display:flex;align-items:center;justify-content:center">🌗</div>
     </div>
     <div class="sv" style="padding-top:10px">
       <div style="background:linear-gradient(135deg,var(--acc2),var(--acc));border-radius:18px;padding:20px;margin-bottom:10px;position:relative;overflow:hidden">
@@ -496,39 +496,29 @@ const THEMES = [
 
 // ── DAILY QUOTE ── same quote all day, changes at local midnight.
 const QUOTES=[
-  '오늘도 버텨낸 당신, 이미 충분히 잘하고 있어요',
-  '밤을 지키는 당신 덕분에 누군가는 편히 잠들어요',
-  '조금 느려도 괜찮아요, 멈추지만 않으면 돼요',
-  '고단한 하루도 결국 지나가요',
-  '쉬는 날엔 아무것도 안 해도 괜찮아요',
-  '오늘 하루도 애쓴 당신을 응원해요',
-  '지친 몸도 마음만은 잘 챙겨주세요',
-  '당신의 근무가 누군가에겐 안심이 돼요',
-  '작은 휴식도 소중히 여겨주세요',
-  '오늘 하루, 딱 한 걸음만 더 가봐요',
-  '아무리 바빠도 물 한 잔 챙겨 마셔요',
-  '수고했다는 말, 스스로에게도 해주세요',
-  '완벽하지 않아도 오늘의 최선이면 충분해요',
-  '피곤한 날일수록 나 자신에게 다정하게',
-  '다음 휴무를 기다리며 오늘도 화이팅이에요',
-  '누군가의 하루를 지켜주는 당신이 자랑스러워요',
-  '잠깐의 틈에도 숨 한번 크게 쉬어봐요',
-  '오늘의 고생이 헛되지 않을 거예요',
-  '무너지지 않고 여기까지 온 것만으로도 대단해요',
-  '당신의 노력은 반드시 어딘가에 남아요',
-  '조급해하지 않아도 괜찮아요, 잘 가고 있어요',
-  '몸이 힘들 땐 마음이라도 가볍게',
-  '오늘도 무사히, 그거면 충분해요',
-  '지금 이 순간도 잘 버티고 있어요',
-  '따뜻한 밥 한 끼, 오늘은 꼭 챙겨요',
-  '누구보다 성실한 당신, 알아주는 사람이 있어요',
-  '힘든 날엔 잠깐 멈춰도 괜찮아요',
-  '당신의 존재만으로도 이 팀은 든든해요',
-  '오늘 하루도 참 애썼어요',
-  '내일은 오늘보다 조금 더 가벼울 거예요',
+  {q:'천 리 길도 한 걸음부터',a:'노자'},
+  {q:'나는 실패한 게 아니다, 안 되는 방법 1만 가지를 찾았을 뿐이다',a:'토마스 에디슨'},
+  {q:'천재는 1%의 영감과 99%의 노력으로 만들어진다',a:'토마스 에디슨'},
+  {q:'성공은 끝이 아니고 실패는 치명적이지 않다, 중요한 건 계속하는 용기다',a:'윈스턴 처칠'},
+  {q:'고개를 들어 해를 보면 그림자는 보이지 않는다',a:'헬렌 켈러'},
+  {q:'실패해본 적 없는 사람은 새로운 시도를 해본 적 없는 사람이다',a:'알베르트 아인슈타인'},
+  {q:'가장 큰 영광은 넘어지지 않는 것이 아니라 넘어질 때마다 다시 일어서는 것이다',a:'넬슨 만델라'},
+  {q:'세상에서 보고 싶은 변화, 그 자체가 되어라',a:'마하트마 간디'},
+  {q:'할 수 있다고 믿든 없다고 믿든, 믿는 대로 된다',a:'헨리 포드'},
+  {q:'준비에 실패하는 것은 실패를 준비하는 것이다',a:'벤저민 프랭클린'},
+  {q:'죽고자 하면 살고, 살고자 하면 죽는다',a:'이순신'},
+  {q:'오늘 할 일을 내일로 미루지 말라',a:'안창호'},
+  {q:'해보기는 했어?',a:'정주영'},
+  {q:'인생은 두려워할 대상이 아니라 이해해야 할 대상이다',a:'마리 퀴리'},
+  {q:'멈추지만 않는다면 얼마나 천천히 가는지는 중요하지 않다',a:'공자'},
+  {q:'자신을 아는 것이 모든 지혜의 시작이다',a:'소크라테스'},
+  {q:'무엇을 이루었는가보다 어떤 사람이 되어가는가가 중요하다',a:'랄프 왈도 에머슨'},
+  {q:'미래를 준비하는 가장 좋은 방법은 오늘을 충실히 사는 것이다',a:'에이브러햄 링컨'},
+  {q:'나는 거인들의 어깨 위에 서 있었을 뿐이다',a:'아이작 뉴턴'},
+  {q:'내 사전에 불가능이란 없다',a:'나폴레옹'},
 ];
 function dayOfYear(d){return Math.floor((d-new Date(d.getFullYear(),0,0))/86400000);}
-function todaysQuote(){return QUOTES[(dayOfYear(new Date())+new Date().getFullYear())%QUOTES.length];}
+function todaysQuote(){const item=QUOTES[(dayOfYear(new Date())+new Date().getFullYear())%QUOTES.length];return`${item.q} — ${item.a}`;}
 
 function renderThemeGrid(){
   const g=document.getElementById('theme-grid');
