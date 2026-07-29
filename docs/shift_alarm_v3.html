@@ -149,7 +149,7 @@ input[type=file]{display:none}
   <!-- HOME -->
   <div id="s1" class="scr">
     <div class="ph" style="display:flex;justify-content:space-between;align-items:center">
-      <div><p style="font-size:16px;font-weight:700;letter-spacing:-.3px;line-height:1.4" id="h-greet">&nbsp;</p><p style="font-size:12px;color:var(--tx2);margin-top:2px" id="h-date"></p></div>
+      <div><p style="font-size:16px;font-weight:700;letter-spacing:-.3px;line-height:1.4" id="h-greet">&nbsp;</p><p style="font-size:12px;color:var(--tx2);margin-top:2px" id="h-date"></p><p style="font-size:11px;color:var(--acc);margin-top:2px;font-weight:600" id="h-streak"></p></div>
       <div style="width:36px;height:36px;border-radius:50%;background:var(--accg);border:.5px solid var(--acc);display:flex;align-items:center;justify-content:center">🌗</div>
     </div>
     <div class="sv" style="padding-top:10px">
@@ -390,6 +390,7 @@ input[type=file]{display:none}
     <div class="ph" style="display:flex;align-items:center;justify-content:space-between">
       <div><p style="font-size:22px;font-weight:700;letter-spacing:-.3px">캘린더</p><p id="cml" style="font-size:12px;color:var(--tx2);margin-top:2px"></p></div>
       <div style="display:flex;gap:6px">
+        <button onclick="shareSchedule()" style="border:.5px solid var(--brd2);background:none;border-radius:8px;padding:6px 12px;cursor:pointer;color:var(--tx);font-size:15px">↗</button>
         <button onclick="cp()" style="border:.5px solid var(--brd2);background:none;border-radius:8px;padding:6px 12px;cursor:pointer;color:var(--tx);font-size:15px">‹</button>
         <button onclick="cn()" style="border:.5px solid var(--brd2);background:none;border-radius:8px;padding:6px 12px;cursor:pointer;color:var(--tx);font-size:15px">›</button>
       </div>
@@ -430,7 +431,7 @@ input[type=file]{display:none}
           <p style="font-size:13px;font-weight:500">알림 권한</p>
           <p style="font-size:11px;color:var(--tx2);margin-top:2px">알람이 울리려면 알림을 허용해야 해요</p>
         </div>
-        <button class="badge no" id="notif-badge" onclick="requestNotifPermission()" style="border:none;cursor:pointer">확인 중…</button>
+        <button class="badge no" id="notif-badge" onclick="showNotifPrimer()" style="border:none;cursor:pointer">확인 중…</button>
       </div>
       <div class="warn">⚠️ 브라우저/PWA 알람은 앱이 화면에 떠 있거나 최근 사용 목록에 남아있을 때 가장 안정적으로 울려요. 완전히 종료하거나 기기를 재부팅하면 예약된 알람이 사라질 수 있어요. 앱을 열 때마다 자동으로 알람이 다시 설정돼요.</div>
       <div class="cd" id="al"><p style="font-size:13px;color:var(--tx2)">스케줄 분석 후 표시돼요</p></div>
@@ -449,6 +450,17 @@ input[type=file]{display:none}
     <div class="ni" onclick="go(4)" id="n4"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span class="nl">캘린더</span></div>
     <div class="ni" onclick="go(2)" id="n2"><svg viewBox="0 0 24 24" fill="none" stroke="var(--tx3)" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M4.93 19.07l1.41-1.41M19.07 19.07l-1.41-1.41M12 2v2M12 20v2M2 12h2M20 12h2"/></svg><span class="nl">설정</span></div>
   </div>
+
+  <!-- NOTIFICATION PRIMER -->
+  <div id="notif-primer" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);align-items:center;justify-content:center;padding:24px">
+    <div class="cd" style="max-width:340px;text-align:center;padding:30px 22px">
+      <div style="font-size:44px;margin-bottom:14px">🔔</div>
+      <p style="font-size:17px;font-weight:700;margin-bottom:10px">알림을 허용해주세요</p>
+      <p style="font-size:13px;color:var(--tx2);line-height:1.6;margin-bottom:22px">출근 시간에 맞춰 알람을 울리려면 알림 권한이 꼭 필요해요. 오직 근무 알람에만 사용하고, 다른 목적으로는 쓰지 않아요.</p>
+      <button class="btn bp" onclick="confirmNotifPrimer()">알림 허용하기</button>
+      <button class="btn bgh" onclick="dismissNotifPrimer()" style="margin-top:8px">나중에</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -465,9 +477,24 @@ let photoB64=null,photoMime=null;
 let curTheme='dark';
 let nameHistory=[];
 let apiKey='';
+let appStreak=0;
 
 const STORE_KEY='shiftAlarmV3State';
 const API_KEY_STORE='shiftAlarmV3ApiKey';
+const STREAK_KEY='shiftAlarmV3Streak';
+
+// ── STREAK ── consecutive calendar days the app's been opened.
+function updateStreak(){
+  const todayStr=new Date().toDateString();
+  let data={count:0,last:null};
+  try{data=JSON.parse(localStorage.getItem(STREAK_KEY))||data;}catch(e){}
+  if(data.last===todayStr){appStreak=data.count;return;}
+  const yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);
+  data.count=(data.last===yesterday.toDateString())?data.count+1:1;
+  data.last=todayStr;
+  appStreak=data.count;
+  try{localStorage.setItem(STREAK_KEY,JSON.stringify(data));}catch(e){}
+}
 
 // ── PERSISTENCE ──
 function persist(){
@@ -764,6 +791,15 @@ function requestNotifPermission(){
   if(!('Notification' in window)){alert('이 브라우저는 알림을 지원하지 않아요');return;}
   Notification.requestPermission().then(()=>{updateNotifBadge();setAlarms();subscribeToPush();});
 }
+// Explain *why* before the OS permission popup fires — asking cold tanks
+// the accept rate, a short primer screen first measurably improves it.
+function showNotifPrimer(){
+  if(!('Notification' in window)){alert('이 브라우저는 알림을 지원하지 않아요');return;}
+  if(Notification.permission!=='default'){requestNotifPermission();return;}
+  document.getElementById('notif-primer').style.display='flex';
+}
+function dismissNotifPrimer(){document.getElementById('notif-primer').style.display='none';}
+function confirmNotifPrimer(){dismissNotifPrimer();requestNotifPermission();}
 
 // ── SET ALARMS ──
 // Single source of truth for "what alarms are pending" — used both to arm
@@ -803,13 +839,26 @@ function scheduleAt(epochMs,fn){
   arm();
   return{cancel(){cancelled=true;clearTimeout(timerId);}};
 }
+// Fires a locally-timed alarm through the service worker (not the bare
+// Notification constructor) so it gets the same snooze action button as a
+// push-delivered one, and so notificationclick has one handler for both.
+function fireLocalAlarm(a){
+  playAlarmSound();
+  const opts={body:a.body,icon:'./icons/icon.svg',badge:'./icons/icon.svg',vibrate:[200,100,200,100,200],tag:'shift-alarm',renotify:true,requireInteraction:true,actions:[{action:'snooze',title:'⏰ 10분 후 다시'}],data:{deviceId:getDeviceId(),title:a.title,body:a.body}};
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.getRegistration().then(reg=>{
+      if(reg)reg.showNotification(a.title,opts);
+      else try{new Notification(a.title,{body:a.body});}catch(e){}
+    });
+  }else{try{new Notification(a.title,{body:a.body});}catch(e){}}
+}
 function setAlarms(){
   aTimers.forEach(t=>t.cancel());aTimers=[];
   syncScheduleToServer();
   if(!('Notification' in window))return;
   if(Notification.permission!=='granted')return;
   computeAlarmList().forEach(a=>{
-    const t=scheduleAt(a.epochMs,()=>{playAlarmSound();try{new Notification(a.title,{body:a.body});}catch(e){}});
+    const t=scheduleAt(a.epochMs,()=>fireLocalAlarm(a));
     aTimers.push(t);
   });
 }
@@ -1129,11 +1178,13 @@ function applyManual(){
 function rHome(){
   if(cdTimer)clearInterval(cdTimer);
   document.getElementById('h-greet').textContent=todaysQuote();
+  document.getElementById('h-streak').textContent=appStreak>1?`🔥 연속 ${appStreak}일째 접속 중`:'';
   const now=new Date();const ts=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   document.getElementById('h-date').textContent=`${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 (${W[now.getDay()]})`;
   const today=sched.find(s=>s.date===ts);const todEl=document.getElementById('h-today');
   if(today){const s=shifts.find(x=>x.code===today.code);const at=gAT(today);todEl.innerHTML=s?`<div style="display:flex;align-items:center;gap:12px"><span class="chip" style="${cs(s)};font-size:15px;padding:7px 18px">${s.code}</span><div><p style="font-size:16px;font-weight:600">${s.name}</p><p style="font-size:12px;color:var(--tx2);margin-top:3px">${s.isOff?'🌙 오늘은 쉬는 날':'🕐 출근 '+s.time+' · ⏰ 알람 '+at}</p>${memos[ts]?`<span style="font-size:11px;color:var(--acc);background:var(--accg);border-radius:99px;padding:2px 8px;margin-top:6px;display:inline-block">📝 ${memos[ts]}</span>`:''}</div></div>`:'<p style="font-size:13px;color:var(--tx2)">알 수 없는 코드</p>';}
-  else todEl.innerHTML='<p style="font-size:13px;color:var(--tx2)">오늘 스케줄 없음</p>';
+  else if(sched.length===0)todEl.innerHTML='<div style="text-align:center;padding:14px 8px"><div style="font-size:30px;margin-bottom:8px">📋</div><p style="font-size:13px;color:var(--tx2);margin-bottom:12px">아직 등록된 스케줄이 없어요</p><button class="btn bp" onclick="go(3)" style="max-width:220px;margin:0 auto">＋ 스케줄 입력하러 가기</button></div>';
+  else todEl.innerHTML='<p style="font-size:13px;color:var(--tx2)">오늘은 근무가 없어요</p>';
   const next=sched.find(s=>{const sh=shifts.find(x=>x.code===s.code);return s.date>=ts&&sh&&!sh.isOff;});
   document.getElementById('h-ab').style.display='none';
   if(next){
@@ -1176,6 +1227,15 @@ function showDet(ds){
 function saveMemo(ds){const v=document.getElementById('mi-'+ds)?.value?.trim();if(v)memos[ds]=v;else delete memos[ds];persist();rCal();showDet(ds);}
 function cp(){calM--;if(calM<0){calM=11;calY--;}rCal();}
 function cn(){calM++;if(calM>11){calM=0;calY++;}rCal();}
+function shareSchedule(){
+  const monthSched=sched.filter(s=>{const d=new Date(s.date);return d.getFullYear()===calY&&d.getMonth()===calM;}).sort((a,b)=>a.date.localeCompare(b.date));
+  if(!monthSched.length){alert('이번 달에 공유할 스케줄이 없어요');return;}
+  const lines=monthSched.map(item=>{const s=shifts.find(x=>x.code===item.code);return`${item.date.slice(5)} ${s?s.code:item.code}`;});
+  const text=`${calY}년 ${calM+1}월 근무표\n`+lines.join('\n');
+  if(navigator.share){navigator.share({title:'근무표',text}).catch(()=>{});}
+  else if(navigator.clipboard){navigator.clipboard.writeText(text).then(()=>alert('클립보드에 복사했어요')).catch(()=>alert(text));}
+  else alert(text);
+}
 
 // ── CUSTOM ALARMS ──
 function addCA(){
@@ -1225,6 +1285,7 @@ function registerSW(){
 
 // ── INIT ──
 restore();
+updateStreak();
 document.getElementById('app').setAttribute('data-theme',curTheme);
 const themeMeta=THEMES.find(t=>t.id===curTheme);
 if(themeMeta)document.getElementById('theme-color-meta').setAttribute('content',themeMeta.bg);

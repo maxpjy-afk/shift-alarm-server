@@ -69,11 +69,40 @@ app.post('/unsubscribe', async (req, res) => {
   }
 });
 
+// Hit by the service worker's notificationclick handler when someone taps
+// the "10분 후 다시" action on an alarm notification. Kept in its own field
+// (not device.alarms) so the next /sync full-replace from the client — which
+// knows nothing about this one-off snooze — can't wipe it out before /tick
+// gets to it.
+app.post('/snooze', async (req, res) => {
+  const { deviceId, title, body, delayMs } = req.body || {};
+  if (!deviceId || !title) return res.status(400).json({ error: 'deviceId and title required' });
+  try {
+    const existing = (await getDevice(deviceId)) || { alarms: [] };
+    existing.snoozed = existing.snoozed || [];
+    existing.snoozed.push({
+      id: 'snooze-' + Date.now(),
+      epochMs: Date.now() + (Number(delayMs) > 0 ? Number(delayMs) : 10 * 60 * 1000),
+      title,
+      body: body || ''
+    });
+    await saveDevice(deviceId, existing);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Hit by an external cron pinger (e.g. cron-job.org) roughly once a minute.
 // Finds every alarm due to fire in the past (and not too stale to still be
 // meaningful) and sends a push for it. This is what lets an alarm ring even
 // when the app has been fully closed for days.
 const STALE_MS = 15 * 60 * 1000; // don't fire alarms more than 15min late
+function splitDue(list, now) {
+  const due = (list || []).filter(a => a.epochMs <= now && now - a.epochMs < STALE_MS);
+  const remaining = (list || []).filter(a => a.epochMs > now || now - a.epochMs >= STALE_MS);
+  return { due, remaining };
+}
 app.all('/tick', async (req, res) => {
   const now = Date.now();
   let sent = 0, failed = 0, pruned = 0;
@@ -81,17 +110,20 @@ app.all('/tick', async (req, res) => {
     const ids = await listDeviceIds();
     for (const deviceId of ids) {
       const device = await getDevice(deviceId);
-      if (!device || !device.subscription || !Array.isArray(device.alarms)) continue;
+      if (!device || !device.subscription) continue;
 
-      const due = device.alarms.filter(a => a.epochMs <= now && now - a.epochMs < STALE_MS);
-      const remaining = device.alarms.filter(a => a.epochMs > now || now - a.epochMs >= STALE_MS);
+      const scheduled = splitDue(device.alarms, now);
+      const snoozed = splitDue(device.snoozed, now);
+      const due = scheduled.due.concat(snoozed.due);
+      const changed = due.length || scheduled.remaining.length !== (device.alarms || []).length
+        || snoozed.remaining.length !== (device.snoozed || []).length;
 
       let subscriptionDead = false;
       for (const alarm of due) {
         try {
           await webpush.sendNotification(
             device.subscription,
-            JSON.stringify({ title: alarm.title, body: alarm.body || '' })
+            JSON.stringify({ title: alarm.title, body: alarm.body || '', deviceId })
           );
           sent++;
         } catch (e) {
@@ -104,8 +136,9 @@ app.all('/tick', async (req, res) => {
         }
       }
 
-      if (due.length || remaining.length !== device.alarms.length) {
-        device.alarms = remaining;
+      if (changed) {
+        device.alarms = scheduled.remaining;
+        device.snoozed = snoozed.remaining;
         if (subscriptionDead) device.subscription = null;
         await saveDevice(deviceId, device);
         pruned += due.length;

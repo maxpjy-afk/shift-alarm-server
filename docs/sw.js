@@ -1,4 +1,4 @@
-const CACHE = 'shift-alarm-v3-cache-1';
+const CACHE = 'shift-alarm-v3-cache-2';
 const SHELL = [
   './shift_alarm_v3.html',
   './manifest.json',
@@ -39,13 +39,15 @@ self.addEventListener('fetch', (e) => {
   );
 });
 
+const BACKEND_URL = 'https://shift-alarm-server.onrender.com';
+
 // Fires even when the app is fully closed — this is the whole point of the
 // backup push server. The payload is whatever server.js sent for the due
-// alarm: { title, body }.
+// alarm: { title, body, deviceId }.
 self.addEventListener('push', (e) => {
-  let data = { title: '근무 알람', body: '' };
+  let data = { title: '근무 알람', body: '', deviceId: null };
   try {
-    if (e.data) data = e.data.json();
+    if (e.data) data = Object.assign(data, e.data.json());
   } catch (err) {}
   e.waitUntil(
     self.registration.showNotification(data.title, {
@@ -55,12 +57,31 @@ self.addEventListener('push', (e) => {
       vibrate: [200, 100, 200, 100, 200],
       tag: 'shift-alarm',
       renotify: true,
-      requireInteraction: true
+      requireInteraction: true,
+      actions: [{ action: 'snooze', title: '⏰ 10분 후 다시' }],
+      data: { deviceId: data.deviceId, title: data.title, body: data.body }
     })
   );
 });
 
 self.addEventListener('notificationclick', (e) => {
+  const data = e.notification.data || {};
+  if (e.action === 'snooze') {
+    e.notification.close();
+    e.waitUntil(
+      fetch(BACKEND_URL + '/snooze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deviceId: data.deviceId,
+          title: data.title || '근무 알람',
+          body: data.body || '',
+          delayMs: 10 * 60 * 1000
+        })
+      }).catch(() => {})
+    );
+    return;
+  }
   e.notification.close();
   e.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
