@@ -149,7 +149,7 @@ input[type=file]{display:none}
   <!-- HOME -->
   <div id="s1" class="scr">
     <div class="ph" style="display:flex;justify-content:space-between;align-items:center">
-      <div><p style="font-size:16px;font-weight:700;letter-spacing:-.3px;line-height:1.4" id="h-greet">&nbsp;</p><p style="font-size:12px;color:var(--tx2);margin-top:2px" id="h-date"></p><p style="font-size:11px;color:var(--acc);margin-top:2px;font-weight:600" id="h-streak"></p></div>
+      <div><p style="font-size:22px;font-weight:700;letter-spacing:-.3px" id="h-date"></p><p style="font-size:11px;color:var(--acc);margin-top:3px;font-weight:600" id="h-streak"></p></div>
       <div style="width:36px;height:36px;border-radius:50%;background:var(--accg);border:.5px solid var(--acc);display:flex;align-items:center;justify-content:center">🌗</div>
     </div>
     <div class="sv" style="padding-top:10px">
@@ -522,32 +522,6 @@ const THEMES = [
   {id:'light',  name:'라이트', bg:'#f5f5fa', acc:'#7c6ef7', preview:['#f5f5fa','#7c6ef7','#ffffff']},
 ];
 
-// ── DAILY QUOTE ── same quote all day, changes at local midnight.
-const QUOTES=[
-  {q:'천 리 길도 한 걸음부터',a:'노자'},
-  {q:'나는 실패한 게 아니다, 안 되는 방법 1만 가지를 찾았을 뿐이다',a:'토마스 에디슨'},
-  {q:'천재는 1%의 영감과 99%의 노력으로 만들어진다',a:'토마스 에디슨'},
-  {q:'성공은 끝이 아니고 실패는 치명적이지 않다, 중요한 건 계속하는 용기다',a:'윈스턴 처칠'},
-  {q:'고개를 들어 해를 보면 그림자는 보이지 않는다',a:'헬렌 켈러'},
-  {q:'실패해본 적 없는 사람은 새로운 시도를 해본 적 없는 사람이다',a:'알베르트 아인슈타인'},
-  {q:'가장 큰 영광은 넘어지지 않는 것이 아니라 넘어질 때마다 다시 일어서는 것이다',a:'넬슨 만델라'},
-  {q:'세상에서 보고 싶은 변화, 그 자체가 되어라',a:'마하트마 간디'},
-  {q:'할 수 있다고 믿든 없다고 믿든, 믿는 대로 된다',a:'헨리 포드'},
-  {q:'준비에 실패하는 것은 실패를 준비하는 것이다',a:'벤저민 프랭클린'},
-  {q:'죽고자 하면 살고, 살고자 하면 죽는다',a:'이순신'},
-  {q:'오늘 할 일을 내일로 미루지 말라',a:'안창호'},
-  {q:'해보기는 했어?',a:'정주영'},
-  {q:'인생은 두려워할 대상이 아니라 이해해야 할 대상이다',a:'마리 퀴리'},
-  {q:'멈추지만 않는다면 얼마나 천천히 가는지는 중요하지 않다',a:'공자'},
-  {q:'자신을 아는 것이 모든 지혜의 시작이다',a:'소크라테스'},
-  {q:'무엇을 이루었는가보다 어떤 사람이 되어가는가가 중요하다',a:'랄프 왈도 에머슨'},
-  {q:'미래를 준비하는 가장 좋은 방법은 오늘을 충실히 사는 것이다',a:'에이브러햄 링컨'},
-  {q:'나는 거인들의 어깨 위에 서 있었을 뿐이다',a:'아이작 뉴턴'},
-  {q:'내 사전에 불가능이란 없다',a:'나폴레옹'},
-];
-function dayOfYear(d){return Math.floor((d-new Date(d.getFullYear(),0,0))/86400000);}
-function todaysQuote(){const item=QUOTES[(dayOfYear(new Date())+new Date().getFullYear())%QUOTES.length];return`${item.q} — ${item.a}`;}
-
 function renderThemeGrid(){
   const g=document.getElementById('theme-grid');
   g.innerHTML=THEMES.map(t=>`
@@ -693,7 +667,7 @@ function obNext(){
 function goMain(){
   document.getElementById('s0').classList.remove('act');
   try{localStorage.setItem('shiftAlarmV3Onboarded','1');}catch(e){}
-  go(1);
+  go(3);switchIT(2);
 }
 
 // ── NAV ──
@@ -743,9 +717,21 @@ function addShift(){
   rShiftList();rIChips();persist();
 }
 function rmShift(i){shifts.splice(i,1);rShiftList();rIChips();persist();}
+// One tap to seed the common 3-shift set (데이/이브닝/나이트) so a brand-new
+// user can jump straight to marking calendar days instead of filling out
+// the add-shift form three times first.
+function quickStartShifts(){
+  if(shifts.length)return;
+  shifts=[
+    {code:'D',name:'데이',time:'07:00',hours:8,before:120,isOff:false,color:'#f0a830'},
+    {code:'E',name:'이브닝',time:'15:00',hours:8,before:120,isOff:false,color:'#38a8f0'},
+    {code:'N',name:'나이트',time:'23:00',hours:8,before:120,isOff:false,color:'#a070f8'},
+  ];
+  rShiftList();rIChips();persist();
+}
 function rShiftList(){
   const w=document.getElementById('sl-wrap');
-  if(!shifts.length){w.innerHTML='<div class="cd"><p style="font-size:13px;color:var(--tx2)">아직 없어요</p></div>';return;}
+  if(!shifts.length){w.innerHTML='<div class="cd" style="text-align:center"><p style="font-size:13px;color:var(--tx2);margin-bottom:10px">아직 없어요</p><button class="btn bgh" onclick="quickStartShifts()">⚡ 기본 3교대(D/E/N)로 빠른 시작</button></div>';return;}
   w.innerHTML=shifts.map((s,i)=>`<div class="cd3" style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:10px"><span class="chip" style="${cs(s)}">${s.code}</span><div><p style="font-size:13px;font-weight:500">${s.name}</p><p style="font-size:11px;color:var(--tx2)">${s.isOff?'휴무':s.time+' · '+s.before+'분 전 · '+s.hours+'h'}</p></div></div><button onclick="rmShift(${i})" style="border:none;background:none;color:#f05555;cursor:pointer;font-size:20px;padding:6px;line-height:1">×</button></div>`).join('');
 }
 function rIChips(){
@@ -1159,7 +1145,7 @@ function rManCal(){
 function pickDay(ds){
   selDay=ds;const d=new Date(ds);
   document.getElementById('mpd').textContent=`${ds.slice(5)} (${W[d.getDay()]}) 근무 선택`;
-  document.getElementById('mpb').innerHTML=shifts.map(s=>`<button onclick="setDS('${ds}','${s.code}')" class="chip" style="${cs(s)};cursor:pointer;padding:9px 15px">${s.code} ${s.name}</button>`).join('');
+  document.getElementById('mpb').innerHTML=shifts.length?shifts.map(s=>`<button onclick="setDS('${ds}','${s.code}')" class="chip" style="${cs(s)};cursor:pointer;padding:9px 15px">${s.code} ${s.name}</button>`).join(''):`<div style="width:100%;text-align:center;padding:6px 0"><p style="font-size:12px;color:var(--tx2);margin-bottom:10px">먼저 근무 유형을 등록해야 선택할 수 있어요</p><button class="btn bgh" onclick="quickStartShifts();pickDay('${ds}')" style="font-size:12px">⚡ 기본 3교대(D/E/N)로 빠른 시작</button></div>`;
   document.getElementById('mpick').style.display='block';
   document.getElementById('cda').value=ds;rManCal();
 }
@@ -1178,7 +1164,6 @@ function applyManual(){
 // ── HOME ──
 function rHome(){
   if(cdTimer)clearInterval(cdTimer);
-  document.getElementById('h-greet').textContent=todaysQuote();
   document.getElementById('h-streak').textContent=appStreak>1?`🔥 연속 ${appStreak}일째 접속 중`:'';
   const now=new Date();const ts=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   document.getElementById('h-date').textContent=`${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 (${W[now.getDay()]})`;
